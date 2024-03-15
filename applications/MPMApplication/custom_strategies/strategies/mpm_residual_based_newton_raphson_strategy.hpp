@@ -12,8 +12,7 @@
 //
 
 
-#if !defined(KRATOS_MPM_RESIDUAL_BASED_NEWTON_RAPHSON_STRATEGY )
-#define      KRATOS_MPM_RESIDUAL_BASED_NEWTON_RAPHSON_STRATEGY
+#pragma once
 
 /* System includes */
 
@@ -316,11 +315,14 @@ public:
             if (this->GetEchoLevel() > 1) this->MaxIterationsExceeded();
         }
 
+        // Calculate reactions if required
+        if (this->GetCalculateReactionsFlag()) {
+            p_builder_and_solver->CalculateReactions(p_scheme, BaseType::GetModelPart(), rA, rDx, rb);
+        }
+
         return is_converged;
     }
 
 }; /* Class MPMResidualBasedNewtonRaphsonStrategy */
 
 } /* namespace Kratos.*/
-
-#endif /* KRATOS_MPM_RESIDUAL_BASED_NEWTON_RAPHSON_STRATEGY  defined */
