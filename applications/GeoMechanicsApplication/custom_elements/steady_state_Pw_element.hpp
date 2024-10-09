@@ -45,17 +45,13 @@ public:
 
     /// The definition of the sizetype
     using SizeType = std::size_t;
-    using BaseType::CalculateRetentionResponse;
     using BaseType::mConstitutiveLawVector;
     using BaseType::mIsInitialised;
     using BaseType::mRetentionLawVector;
 
     using ElementVariables = typename BaseType::ElementVariables;
 
-    ///----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-
-    /// Default Constructor
-    SteadyStatePwElement(IndexType NewId = 0) : BaseType(NewId) {}
+    explicit SteadyStatePwElement(IndexType NewId = 0) : BaseType(NewId) {}
 
     /// Constructor using an array of nodes
     SteadyStatePwElement(IndexType NewId, const NodesArrayType& ThisNodes, std::unique_ptr<StressStatePolicy> pStressStatePolicy)
@@ -78,10 +74,7 @@ public:
     {
     }
 
-    /// Destructor
-    ~SteadyStatePwElement() override {}
-
-    ///----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+    ~SteadyStatePwElement() = default;
 
     Element::Pointer Create(IndexType               NewId,
                             NodesArrayType const&   ThisNodes,
@@ -89,10 +82,7 @@ public:
 
     Element::Pointer Create(IndexType NewId, GeometryType::Pointer pGeom, PropertiesType::Pointer pProperties) const override;
 
-    ///----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
     int Check(const ProcessInfo& rCurrentProcessInfo) const override;
-
-    ///----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
     // Turn back information as a string.
     std::string Info() const override
@@ -110,29 +100,20 @@ public:
                  << "\nRetention law: " << mRetentionLawVector[0]->Info();
     }
 
-    ///----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-
 protected:
     /// Member Variables
 
-    ///----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
     void CalculateAll(MatrixType&        rLeftHandSideMatrix,
                       VectorType&        rRightHandSideVector,
                       const ProcessInfo& CurrentProcessInfo,
-                      const bool         CalculateStiffnessMatrixFlag,
-                      const bool         CalculateResidualVectorFlag) override;
+                      bool               CalculateStiffnessMatrixFlag,
+                      bool               CalculateResidualVectorFlag) override;
 
     void CalculateAndAddLHS(MatrixType& rLeftHandSideMatrix, ElementVariables& rVariables) override;
 
     void CalculateAndAddRHS(VectorType& rRightHandSideVector, ElementVariables& rVariables, unsigned int GPoint) override;
 
-    ///----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-
 private:
-    /// Member Variables
-
-    ///----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-
     /// Serialization
 
     friend class Serializer;

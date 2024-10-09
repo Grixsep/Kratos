@@ -21,7 +21,7 @@
 #include "custom_elements/U_Pw_base_element.hpp"
 #include "custom_elements/U_Pw_small_strain_interface_element.hpp"
 #include "custom_utilities/element_utilities.hpp"
-#include "custom_utilities/interface_element_utilities.hpp"
+#include "custom_utilities/interface_element_utilities.h"
 #include "geo_mechanics_application_variables.h"
 
 namespace Kratos
@@ -41,16 +41,14 @@ public:
     using NodesArrayType = GeometryType::PointsArrayType;
     using VectorType     = Vector;
     using MatrixType     = Matrix;
-    using UPwBaseElement<TDim, TNumNodes>::mConstitutiveLawVector;
-    using UPwBaseElement<TDim, TNumNodes>::mRetentionLawVector;
-    using UPwBaseElement<TDim, TNumNodes>::mStressVector;
-    using UPwBaseElement<TDim, TNumNodes>::mThisIntegrationMethod;
+    using UPwBaseElement::mConstitutiveLawVector;
+    using UPwBaseElement::mRetentionLawVector;
+    using UPwBaseElement::mStressVector;
+    using UPwBaseElement::mThisIntegrationMethod;
 
     using SFGradAuxVariables = typename UPwSmallStrainInterfaceElement<TDim, TNumNodes>::SFGradAuxVariables;
     using InterfaceElementVariables =
         typename UPwSmallStrainInterfaceElement<TDim, TNumNodes>::InterfaceElementVariables;
-
-    //----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
     // Default constructor
     UPwSmallStrainLinkInterfaceElement() : UPwSmallStrainInterfaceElement<TDim, TNumNodes>() {}
@@ -72,16 +70,11 @@ public:
     {
     }
 
-    // Destructor
-    ~UPwSmallStrainLinkInterfaceElement() override {}
-
-    //----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+    ~UPwSmallStrainLinkInterfaceElement() = default;
 
     Element::Pointer Create(IndexType               NewId,
                             NodesArrayType const&   ThisNodes,
                             PropertiesType::Pointer pProperties) const override;
-
-    //----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
     void CalculateOnIntegrationPoints(const Variable<array_1d<double, 3>>& rVariable,
                                       std::vector<array_1d<double, 3>>&    rOutput,
@@ -107,26 +100,16 @@ public:
                  << "\nConstitutive law: " << mConstitutiveLawVector[0]->Info();
     }
 
-    //----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-
 protected:
     // Member Variables
-
-    //----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
     void CalculateAll(MatrixType&        rLeftHandSideMatrix,
                       VectorType&        rRightHandSideVector,
                       const ProcessInfo& CurrentProcessInfo,
-                      const bool         CalculateStiffnessMatrixFlag,
-                      const bool         CalculateResidualVectorFlag) override;
-
-    //----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+                      bool               CalculateStiffnessMatrixFlag,
+                      bool               CalculateResidualVectorFlag) override;
 
 private:
-    // Member Variables
-
-    //----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-
     // Serialization
 
     friend class Serializer;
