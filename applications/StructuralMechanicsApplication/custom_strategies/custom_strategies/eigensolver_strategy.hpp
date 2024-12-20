@@ -453,9 +453,9 @@ public:
         this->AssignVariables(Eigenvalues,Eigenvectors);
 
 
-        if (mComputeModalDecompostion) {
+        // if (mComputeModalDecompostion) {
             ComputeModalDecomposition(Eigenvectors);
-        }
+        // }
 
         return true;
         KRATOS_CATCH("")
@@ -781,6 +781,54 @@ private:
         Matrix modal_mass_matrix = ZeroMatrix(m_temp.size1(),m_temp.size1());
         boost::numeric::ublas::axpy_prod(m_temp,trans(rEigenvectors),modal_mass_matrix);
 
+        double total_modal_mass = 0.0;
+
+        for (std::size_t i = 0; i < rMassMatrix.size1(); ++i) {
+            // Access the diagonal element (i, i)
+            if (i < rMassMatrix.size2()) { // Ensure the matrix is not rectangular with fewer columns
+                total_modal_mass += rMassMatrix(i, i);
+            }
+        }
+
+        // Ensure the excitation vector has the correct size
+        SparseMatrixType ExcitationMatrixX = ZeroMatrix(rEigenvectors.size1(),rEigenvectors.size2());
+        SparseMatrixType ExcitationMatrixY = ZeroMatrix(rEigenvectors.size1(),rEigenvectors.size2());
+        SparseMatrixType ExcitationMatrixZ = ZeroMatrix(rEigenvectors.size1(),rEigenvectors.size2());
+
+        // Loop through the rows and columns
+        for (std::size_t i = 0; i < rEigenvectors.size1(); ++i) {
+            for (std::size_t j = 0; j < rEigenvectors.size2(); ++j) {
+                if (j % 3 == 0) { // X-direction DOFs
+                    ExcitationMatrixX(i, j) = 1.0;
+                    ExcitationMatrixY(i, j) = 0.0;
+                    ExcitationMatrixZ(i, j) = 0.0;
+                } else if (j % 3 == 1) { // Y-direction DOFs
+                    ExcitationMatrixX(i, j) = 0.0;
+                    ExcitationMatrixY(i, j) = 1.0;
+                    ExcitationMatrixZ(i, j) = 0.0;
+                } else if (j % 3 == 2) { // Z-direction DOFs
+                    ExcitationMatrixX(i, j) = 0.0;
+                    ExcitationMatrixY(i, j) = 0.0;
+                    ExcitationMatrixZ(i, j) = 1.0;
+                }
+            }
+        }
+
+        SparseMatrixType m_temp_X = ZeroMatrix(rEigenvectors.size1(),rEigenvectors.size2());
+        boost::numeric::ublas::axpy_prod(rEigenvectors,rMassMatrix,m_temp_X,true);
+        Matrix modal_mass_matrix_X = ZeroMatrix(m_temp_X.size1(),m_temp_X.size1());
+        boost::numeric::ublas::axpy_prod(m_temp_X,trans(ExcitationMatrixX),modal_mass_matrix_X);
+
+        SparseMatrixType m_temp_Y = ZeroMatrix(rEigenvectors.size1(),rEigenvectors.size2());
+        boost::numeric::ublas::axpy_prod(rEigenvectors,rMassMatrix,m_temp_Y,true);
+        Matrix modal_mass_matrix_Y = ZeroMatrix(m_temp_Y.size1(),m_temp_Y.size1());
+        boost::numeric::ublas::axpy_prod(m_temp_Y,trans(ExcitationMatrixY),modal_mass_matrix_Y);
+
+        SparseMatrixType m_temp_Z = ZeroMatrix(rEigenvectors.size1(),rEigenvectors.size2());
+        boost::numeric::ublas::axpy_prod(rEigenvectors,rMassMatrix,m_temp_Z,true);
+        Matrix modal_mass_matrix_Z = ZeroMatrix(m_temp_Z.size1(),m_temp_Z.size1());
+        boost::numeric::ublas::axpy_prod(m_temp_Z,trans(ExcitationMatrixZ),modal_mass_matrix_Z);
+
         const SparseMatrixType& rStiffnessMatrix = this->GetStiffnessMatrix();
         SparseMatrixType k_temp = ZeroMatrix(rEigenvectors.size1(),rEigenvectors.size2());
         boost::numeric::ublas::axpy_prod(rEigenvectors,rStiffnessMatrix,k_temp,true);
@@ -791,8 +839,13 @@ private:
         rModelPart.GetProcessInfo()[MODAL_MASS_MATRIX] = modal_mass_matrix;
         rModelPart.GetProcessInfo()[MODAL_STIFFNESS_MATRIX] = modal_stiffness_matrix;
 
+        rModelPart.GetProcessInfo()[MODAL_MASS_MATRIX_X] = modal_mass_matrix_X;
+        rModelPart.GetProcessInfo()[MODAL_MASS_MATRIX_Y] = modal_mass_matrix_Y;
+        rModelPart.GetProcessInfo()[MODAL_MASS_MATRIX_Z] = modal_mass_matrix_Z;
+
+        rModelPart.GetProcessInfo()[TOTAL_MODAL_MASS] = total_modal_mass;
+
         KRATOS_INFO("ModalMassMatrix")      << modal_mass_matrix << std::endl;
-        KRATOS_INFO("ModalStiffnessMatrix") << modal_stiffness_matrix << std::endl;
     }
 
     ///@}

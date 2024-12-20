@@ -104,6 +104,7 @@
 #include "custom_conditions/point_moment_condition_3d.h"
 #include "custom_conditions/displacement_control_condition.h"
 #include "custom_conditions/moving_load_condition.h"
+#include "custom_conditions/free_field_line_condition.h"
 
 /* Adding the displacement-based SBM condition */
 #include "custom_conditions/displacement_shifted_boundary_condition.h"
@@ -510,6 +511,10 @@ private:
     const MovingLoadCondition<2, 3> mMovingLoadCondition2D3N;
     const MovingLoadCondition<3, 2> mMovingLoadCondition3D2N;
     const MovingLoadCondition<3, 3> mMovingLoadCondition3D3N;
+
+    // Free field
+    const FreeFieldLineCondition2D mFreeFieldLineCondition2D2N;
+    const FreeFieldLineCondition2D mFreeFieldLineCondition2D3N;
 
     /* CONSTITUTIVE LAWS */
     // Linear elastics laws

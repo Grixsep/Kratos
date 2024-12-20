@@ -663,13 +663,45 @@ void BaseSolidElement::CalculateDampingMatrix(
     const ProcessInfo& rCurrentProcessInfo
     )
 {
-    const unsigned int mat_size = GetGeometry().PointsNumber() * GetGeometry().WorkingSpaceDimension();
+    KRATOS_TRY;
 
-    StructuralMechanicsElementUtilities::CalculateRayleighDampingMatrix(
-        *this,
-        rDampingMatrix,
-        rCurrentProcessInfo,
-        mat_size);
+    const auto& r_geom = GetGeometry();
+    SizeType dimension = r_geom.WorkingSpaceDimension();
+    SizeType number_of_nodes = r_geom.size();
+    SizeType mat_size = dimension * number_of_nodes;
+
+    // Clear matrix
+    if (rDampingMatrix.size1() != mat_size || rDampingMatrix.size2() != mat_size)
+        rDampingMatrix.resize(mat_size, mat_size, false);
+    noalias(rDampingMatrix) = ZeroMatrix(mat_size, mat_size);
+
+    // Calculate the area or volume of the element
+    double element_size = 1.0;
+    if (dimension == 2) {
+        element_size = r_geom.Area(); // Use Kratos function for 2D area
+    } else if (dimension == 3) {
+        element_size = r_geom.Volume(); // Use Kratos function for 3D volume
+    }
+
+    KRATOS_ERROR_IF(element_size <= 0.0) << "Element area or volume must be positive." << std::endl;
+
+    // Define constants for damping coefficients
+    double Cp = 2675 * 4081;
+    double Cs = 2675 * 2200;
+
+    Cp = 0.0;
+    Cs = 0.0;
+
+    for (IndexType i = 0; i < number_of_nodes; ++i) {
+        const SizeType index = i * dimension;
+        rDampingMatrix(index, index) = Cp; // Longitudinal direction damping
+
+        for (IndexType k = 1; k < dimension; ++k) {
+            rDampingMatrix(index + k, index + k) = Cs; // Shear direction damping
+        }
+    }
+
+    KRATOS_CATCH("");
 }
 
 /***********************************************************************************/
@@ -1140,7 +1172,7 @@ void BaseSolidElement::CalculateOnIntegrationPoints(
         } else {
             CalculateOnConstitutiveLaw(rVariable, rOutput, rCurrentProcessInfo);
         }
-        
+
 
     }
 }

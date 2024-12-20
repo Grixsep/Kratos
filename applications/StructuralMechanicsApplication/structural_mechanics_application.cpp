@@ -206,7 +206,7 @@ KratosStructuralMechanicsApplication::KratosStructuralMechanicsApplication()
       mAxisymUpdatedLagrangian2D8N(0, Element::GeometryType::Pointer(new Quadrilateral2D8<NodeType >(Element::GeometryType::PointsArrayType(8)))),
       mAxisymUpdatedLagrangian2D9N(0, Element::GeometryType::Pointer(new Quadrilateral2D9<NodeType >(Element::GeometryType::PointsArrayType(9)))),
       // Adding the bushing element
-      mBushingElement3D2N(0, Element::GeometryType::Pointer(new Line3D2<NodeType >(Element::GeometryType::PointsArrayType(2)))),      
+      mBushingElement3D2N(0, Element::GeometryType::Pointer(new Line3D2<NodeType >(Element::GeometryType::PointsArrayType(2)))),
       // Adding the spring damper element
       mSpringDamperElement2D(0, Element::GeometryType::Pointer(new Line2D2<NodeType >(Element::GeometryType::PointsArrayType(2)))),
       mSpringDamperElement3D(0, Element::GeometryType::Pointer(new Line3D2<NodeType >(Element::GeometryType::PointsArrayType(2)))),
@@ -281,7 +281,11 @@ KratosStructuralMechanicsApplication::KratosStructuralMechanicsApplication()
       mMovingLoadCondition2D2N(0, Condition::GeometryType::Pointer(new Line2D2<NodeType >(Condition::GeometryType::PointsArrayType(2)))),
       mMovingLoadCondition2D3N(0, Condition::GeometryType::Pointer(new Line2D3<NodeType >(Condition::GeometryType::PointsArrayType(3)))),
       mMovingLoadCondition3D2N(0, Condition::GeometryType::Pointer(new Line3D2<NodeType >(Condition::GeometryType::PointsArrayType(2)))),
-      mMovingLoadCondition3D3N(0, Condition::GeometryType::Pointer(new Line3D3<NodeType >(Condition::GeometryType::PointsArrayType(3)))){}
+      mMovingLoadCondition3D3N(0, Condition::GeometryType::Pointer(new Line3D3<NodeType >(Condition::GeometryType::PointsArrayType(3)))),
+
+      // Adding Free-field conditions
+      mFreeFieldLineCondition2D2N(0, Condition::GeometryType::Pointer(new Line2D2<NodeType >(Condition::GeometryType::PointsArrayType(2)))),
+      mFreeFieldLineCondition2D3N(0, Condition::GeometryType::Pointer(new Line2D3<NodeType >(Condition::GeometryType::PointsArrayType(3)))){}
 
 
 void KratosStructuralMechanicsApplication::Register() {
@@ -308,6 +312,10 @@ void KratosStructuralMechanicsApplication::Register() {
     KRATOS_REGISTER_VARIABLE(EIGENVALUE_VECTOR)
     KRATOS_REGISTER_VARIABLE(EIGENVECTOR_MATRIX)
     KRATOS_REGISTER_VARIABLE(MODAL_MASS_MATRIX)
+    KRATOS_REGISTER_VARIABLE(MODAL_MASS_MATRIX_X)
+    KRATOS_REGISTER_VARIABLE(MODAL_MASS_MATRIX_Y)
+    KRATOS_REGISTER_VARIABLE(MODAL_MASS_MATRIX_Z)
+    KRATOS_REGISTER_VARIABLE(TOTAL_MODAL_MASS)
     KRATOS_REGISTER_VARIABLE(MODAL_STIFFNESS_MATRIX)
 
     // Geometrical
@@ -525,6 +533,8 @@ void KratosStructuralMechanicsApplication::Register() {
     KRATOS_REGISTER_VARIABLE( STRESS_ON_NODE  );
     KRATOS_REGISTER_VARIABLE( DESIGN_VARIABLE_NAME );
 
+    KRATOS_REGISTER_VARIABLE( USE_LUMPED_MASS_MATRIX );
+
     // for DEM-FEM 2D
     KRATOS_REGISTER_VARIABLE(IMPOSED_Z_STRAIN_VALUE)
     KRATOS_REGISTER_VARIABLE(IMPOSED_Z_STRAIN_OPTION)
@@ -686,7 +696,7 @@ void KratosStructuralMechanicsApplication::Register() {
     KRATOS_REGISTER_ELEMENT("AxisymUpdatedLagrangianElement2D9N", mAxisymUpdatedLagrangian2D9N)
 
     // Register the bushing element
-    KRATOS_REGISTER_ELEMENT("BushingElement3D2N", mBushingElement3D2N);    
+    KRATOS_REGISTER_ELEMENT("BushingElement3D2N", mBushingElement3D2N);
 
     // Register the spring damper element
     KRATOS_REGISTER_ELEMENT("SpringDamperElement2D", mSpringDamperElement2D);
@@ -773,6 +783,9 @@ void KratosStructuralMechanicsApplication::Register() {
     KRATOS_REGISTER_CONDITION("MovingLoadCondition3D2N", mMovingLoadCondition3D2N)
     KRATOS_REGISTER_CONDITION("MovingLoadCondition3D3N", mMovingLoadCondition3D3N)
 
+    // Free field
+    KRATOS_REGISTER_CONDITION("FreeFieldLineCondition2D2N", mFreeFieldLineCondition2D2N)
+    KRATOS_REGISTER_CONDITION("FreeFieldLineCondition2D3N", mFreeFieldLineCondition2D3N)
 
     // Register linear elastics laws
     KRATOS_REGISTER_CONSTITUTIVE_LAW("TrussConstitutiveLaw", mTrussConstitutiveLaw);
