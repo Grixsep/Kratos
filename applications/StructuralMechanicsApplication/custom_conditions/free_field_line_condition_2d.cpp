@@ -14,7 +14,7 @@
 // External includes
 
 // Project includes
-#include "custom_conditions/free_field_line_condition.h"
+#include "custom_conditions/free_field_line_condition_2d.h"
 #include "includes/variables.h"
 #include "utilities/math_utils.h"
 #include "utilities/beam_math_utilities.hpp"
