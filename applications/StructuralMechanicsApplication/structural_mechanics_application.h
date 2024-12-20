@@ -104,7 +104,7 @@
 #include "custom_conditions/point_moment_condition_3d.h"
 #include "custom_conditions/displacement_control_condition.h"
 #include "custom_conditions/moving_load_condition.h"
-#include "custom_conditions/free_field_line_condition.h"
+#include "custom_conditions/free_field_line_condition_2d.h"
 
 /* Adding the displacement-based SBM condition */
 #include "custom_conditions/displacement_shifted_boundary_condition.h"
