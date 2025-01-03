@@ -18,13 +18,13 @@
 #include "utilities/math_utils.h"
 
 // Application includes
-#include "small_displacement_interface_element.h"
+#include "free_field_interface_element.h"
 #include "custom_utilities/structural_mechanics_element_utilities.h"
 #include "structural_mechanics_application_variables.h"
 
 namespace Kratos
 {
-SmallDisplacementInterfaceElement::SmallDisplacementInterfaceElement( IndexType NewId, GeometryType::Pointer pGeometry )
+FreeFieldInterfaceElement::FreeFieldInterfaceElement( IndexType NewId, GeometryType::Pointer pGeometry )
     : BaseInterfaceElement( NewId, pGeometry )
 {
     //DO NOT ADD DOFS HERE!!!
@@ -33,7 +33,7 @@ SmallDisplacementInterfaceElement::SmallDisplacementInterfaceElement( IndexType 
 /***********************************************************************************/
 /***********************************************************************************/
 
-SmallDisplacementInterfaceElement::SmallDisplacementInterfaceElement( IndexType NewId, GeometryType::Pointer pGeometry, PropertiesType::Pointer pProperties )
+FreeFieldInterfaceElement::FreeFieldInterfaceElement( IndexType NewId, GeometryType::Pointer pGeometry, PropertiesType::Pointer pProperties )
         : BaseInterfaceElement( NewId, pGeometry, pProperties )
 {
     //DO NOT ADD DOFS HERE!!!
@@ -42,37 +42,37 @@ SmallDisplacementInterfaceElement::SmallDisplacementInterfaceElement( IndexType 
 /***********************************************************************************/
 /***********************************************************************************/
 
-Element::Pointer SmallDisplacementInterfaceElement::Create( IndexType NewId, NodesArrayType const& ThisNodes, PropertiesType::Pointer pProperties ) const
+Element::Pointer FreeFieldInterfaceElement::Create( IndexType NewId, NodesArrayType const& ThisNodes, PropertiesType::Pointer pProperties ) const
 {
-    return Kratos::make_intrusive<SmallDisplacementInterfaceElement>( NewId, GetGeometry().Create( ThisNodes ), pProperties );
+    return Kratos::make_intrusive<FreeFieldInterfaceElement>( NewId, GetGeometry().Create( ThisNodes ), pProperties );
 }
 
 /***********************************************************************************/
 /***********************************************************************************/
 
-Element::Pointer SmallDisplacementInterfaceElement::Create( IndexType NewId, GeometryType::Pointer pGeom, PropertiesType::Pointer pProperties ) const
+Element::Pointer FreeFieldInterfaceElement::Create( IndexType NewId, GeometryType::Pointer pGeom, PropertiesType::Pointer pProperties ) const
 {
-    return Kratos::make_intrusive<SmallDisplacementInterfaceElement>( NewId, pGeom, pProperties );
+    return Kratos::make_intrusive<FreeFieldInterfaceElement>( NewId, pGeom, pProperties );
 }
 
 /***********************************************************************************/
 /***********************************************************************************/
 
-SmallDisplacementInterfaceElement::~SmallDisplacementInterfaceElement()
+FreeFieldInterfaceElement::~FreeFieldInterfaceElement()
 {
 }
 
 /***********************************************************************************/
 /***********************************************************************************/
 
-Element::Pointer SmallDisplacementInterfaceElement::Clone (
+Element::Pointer FreeFieldInterfaceElement::Clone (
     IndexType NewId,
     NodesArrayType const& rThisNodes
     ) const
 {
     KRATOS_TRY
 
-    SmallDisplacementInterfaceElement::Pointer p_new_elem = Kratos::make_intrusive<SmallDisplacementInterfaceElement>(NewId, GetGeometry().Create(rThisNodes), pGetProperties());
+    FreeFieldInterfaceElement::Pointer p_new_elem = Kratos::make_intrusive<FreeFieldInterfaceElement>(NewId, GetGeometry().Create(rThisNodes), pGetProperties());
     p_new_elem->SetData(this->GetData());
     p_new_elem->Set(Flags(*this));
 
@@ -90,7 +90,7 @@ Element::Pointer SmallDisplacementInterfaceElement::Clone (
 /***********************************************************************************/
 /***********************************************************************************/
 
-bool SmallDisplacementInterfaceElement::UseElementProvidedStrain() const
+bool FreeFieldInterfaceElement::UseElementProvidedStrain() const
 {
     return true;
 }
@@ -98,7 +98,74 @@ bool SmallDisplacementInterfaceElement::UseElementProvidedStrain() const
 /***********************************************************************************/
 /***********************************************************************************/
 
-void SmallDisplacementInterfaceElement::CalculateAll(
+void FreeFieldInterfaceElement::CalculateMassMatrix(
+    MatrixType& rMassMatrix,
+    const ProcessInfo& rCurrentProcessInfo
+    )
+{
+    KRATOS_TRY;
+
+    const auto& r_geometry = GetGeometry();
+    SizeType dimension = r_geometry.WorkingSpaceDimension();
+    SizeType number_of_nodes = r_geometry.size();
+    SizeType mat_size = dimension * number_of_nodes;
+
+    // Clear matrix
+    if (rMassMatrix.size1() != mat_size || rMassMatrix.size2() != mat_size)
+        rMassMatrix.resize( mat_size, mat_size, false );
+    noalias(rMassMatrix) = ZeroMatrix( mat_size, mat_size );
+
+    // Mass Matrix is Zero Matrix
+
+    KRATOS_CATCH("");
+}
+
+/***********************************************************************************/
+/***********************************************************************************/
+
+void FreeFieldInterfaceElement::CalculateDampingMatrix(
+    MatrixType& rDampingMatrix,
+    const ProcessInfo& rCurrentProcessInfo
+    )
+{
+    KRATOS_TRY
+
+    const auto& r_geometry = GetGeometry();
+    const SizeType number_of_nodes = r_geometry.size();
+    const SizeType dimension = r_geometry.WorkingSpaceDimension();
+    const SizeType mat_size = number_of_nodes * dimension;
+
+    // Asegúrate de que la matriz de amortiguamiento tenga el tamaño correcto
+    if (rDampingMatrix.size1() != mat_size || rDampingMatrix.size2() != mat_size)
+        rDampingMatrix.resize(mat_size, mat_size, false);
+
+    noalias(rDampingMatrix) = ZeroMatrix(mat_size, mat_size);
+
+    // Obtener las propiedades del elemento
+    const double density = GetProperties()[DENSITY];
+    const double cp = GetProperties()[WAVE_VELOCITY_P];
+    const double cs = GetProperties()[WAVE_VELOCITY_S];
+
+    // Calculate element length
+    const double length = r_geometry.Length();
+
+    // Calcular los términos específicos de la matriz de amortiguamiento
+    rDampingMatrix(2, 2) = 0.5 * length * density * cp; // c22
+    rDampingMatrix(4, 4) = 0.5 * length * density * cp; // c44
+    rDampingMatrix(2, 0) = -0.5 * length * density * cp; // c20
+    rDampingMatrix(4, 6) = -0.5 * length * density * cp; // c46
+    rDampingMatrix(3, 3) = 0.5 * length * density * cs; // c33
+    rDampingMatrix(5, 5) = 0.5 * length * density * cs; // c55
+    rDampingMatrix(3, 1) = -0.5 * length * density * cs; // c31
+    rDampingMatrix(4, 4) = -0.5 * length * density * cs; // c57
+
+    KRATOS_CATCH("")
+}
+
+/***********************************************************************************/
+/***********************************************************************************/
+
+void FreeFieldInterfaceElement::CalculateAll(
     MatrixType& rLeftHandSideMatrix,
     VectorType& rRightHandSideVector,
     const ProcessInfo& rCurrentProcessInfo,
@@ -106,7 +173,7 @@ void SmallDisplacementInterfaceElement::CalculateAll(
     const bool CalculateResidualVectorFlag
     )
 {
-    KRATOS_TRY;
+    KRATOS_TRY
 
     auto& r_geometry = this->GetGeometry();
     const SizeType number_of_nodes = r_geometry.size();
@@ -190,7 +257,7 @@ void SmallDisplacementInterfaceElement::CalculateAll(
 /***********************************************************************************/
 /***********************************************************************************/
 
-void SmallDisplacementInterfaceElement::CalculateKinematicVariables(
+void FreeFieldInterfaceElement::CalculateKinematicVariables(
     KinematicVariables& rThisKinematicVariables,
     const IndexType PointNumber,
     const GeometryType::IntegrationMethod& rIntegrationMethod
@@ -220,7 +287,7 @@ void SmallDisplacementInterfaceElement::CalculateKinematicVariables(
 /***********************************************************************************/
 /***********************************************************************************/
 
-void SmallDisplacementInterfaceElement::SetConstitutiveVariables(
+void FreeFieldInterfaceElement::SetConstitutiveVariables(
     KinematicVariables& rThisKinematicVariables,
     ConstitutiveVariables& rThisConstitutiveVariables,
     ConstitutiveLaw::Parameters& rValues,
@@ -253,7 +320,7 @@ void SmallDisplacementInterfaceElement::SetConstitutiveVariables(
 /***********************************************************************************/
 /***********************************************************************************/
 
-void SmallDisplacementInterfaceElement::CalculateB(
+void FreeFieldInterfaceElement::CalculateB(
     Matrix& rB,
     const Matrix& rDN_DX,
     const GeometryType::IntegrationPointsArrayType& IntegrationPoints,
@@ -270,7 +337,7 @@ void SmallDisplacementInterfaceElement::CalculateB(
 /***********************************************************************************/
 /***********************************************************************************/
 
-void SmallDisplacementInterfaceElement::ComputeEquivalentF(
+void FreeFieldInterfaceElement::ComputeEquivalentF(
     Matrix& rF,
     const Vector& rStrainTensor
     ) const
@@ -281,7 +348,48 @@ void SmallDisplacementInterfaceElement::ComputeEquivalentF(
 /***********************************************************************************/
 /***********************************************************************************/
 
-void SmallDisplacementInterfaceElement::save( Serializer& rSerializer ) const
+void FreeFieldInterfaceElement::CalculateAndAddKm(
+    MatrixType& rLeftHandSideMatrix,
+    const Matrix& B,
+    const Matrix& D,
+    const double IntegrationWeight
+    ) const
+{
+    const auto& r_geometry = GetGeometry();
+    const SizeType number_of_nodes = r_geometry.size();
+    const SizeType dimension = r_geometry.WorkingSpaceDimension();
+    const SizeType mat_size = number_of_nodes * dimension;
+
+    // Asegúrate de que la matriz de rigidez tenga el tamaño correcto
+    if (rLeftHandSideMatrix.size1() != mat_size || rLeftHandSideMatrix.size2() != mat_size)
+        rLeftHandSideMatrix.resize(mat_size, mat_size, false);
+
+    noalias(rLeftHandSideMatrix) = ZeroMatrix(mat_size, mat_size);
+
+    // Asymmetric matrix:
+    // Nielsen, A. H. (2006, May). Absorbing boundary conditions for seismic analysis in ABAQUS. In ABAQUS users’ conference (pp. 359-376).
+    rLeftHandSideMatrix(0, 0) = IntegrationWeight * B(0, 0) * D(0, 0); // k00
+    rLeftHandSideMatrix(0, 6) = IntegrationWeight * B(0, 6) * D(0, 6); // k06
+    rLeftHandSideMatrix(1, 1) = IntegrationWeight * B(1, 1) * D(1, 1); // k11
+    rLeftHandSideMatrix(1, 7) = IntegrationWeight * B(1, 7) * D(1, 7); // k17
+    rLeftHandSideMatrix(2, 1) = IntegrationWeight * B(2, 1) * D(2, 1); // k21
+    rLeftHandSideMatrix(2, 7) = IntegrationWeight * B(2, 7) * D(2, 7); // k27
+    rLeftHandSideMatrix(3, 0) = IntegrationWeight * B(3, 0) * D(3, 0); // k30
+    rLeftHandSideMatrix(3, 6) = IntegrationWeight * B(3, 6) * D(3, 6); // k36
+    rLeftHandSideMatrix(4, 1) = IntegrationWeight * B(4, 1) * D(4, 1); // k41
+    rLeftHandSideMatrix(4, 7) = IntegrationWeight * B(4, 7) * D(4, 7); // k47
+    rLeftHandSideMatrix(5, 0) = IntegrationWeight * B(5, 0) * D(5, 0); // k50
+    rLeftHandSideMatrix(5, 6) = IntegrationWeight * B(5, 6) * D(5, 6); // k56
+    rLeftHandSideMatrix(6, 0) = IntegrationWeight * B(6, 0) * D(6, 0); // k60
+    rLeftHandSideMatrix(6, 6) = IntegrationWeight * B(6, 6) * D(6, 6); // k66
+    rLeftHandSideMatrix(7, 1) = IntegrationWeight * B(7, 1) * D(7, 1); // k71
+    rLeftHandSideMatrix(7, 7) = IntegrationWeight * B(7, 7) * D(7, 7); // k77
+}
+
+/***********************************************************************************/
+/***********************************************************************************/
+
+void FreeFieldInterfaceElement::save( Serializer& rSerializer ) const
 {
     KRATOS_SERIALIZE_SAVE_BASE_CLASS( rSerializer, BaseInterfaceElement );
 }
@@ -289,7 +397,7 @@ void SmallDisplacementInterfaceElement::save( Serializer& rSerializer ) const
 /***********************************************************************************/
 /***********************************************************************************/
 
-void SmallDisplacementInterfaceElement::load( Serializer& rSerializer )
+void FreeFieldInterfaceElement::load( Serializer& rSerializer )
 {
     KRATOS_SERIALIZE_LOAD_BASE_CLASS( rSerializer, BaseInterfaceElement );
 }

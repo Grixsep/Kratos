@@ -92,7 +92,7 @@
 #include "custom_elements/beam_elements/timoshenko_curved_beam_element_2D3N.h"
 
 /* Adding the interface elements */
-#include "custom_elements/interface_elements/small_displacement_interface_element.h"
+#include "custom_elements/interface_elements/free_field_interface_element.h"
 
 /* Conditions */
 #include "custom_conditions/base_load_condition.h"
@@ -452,9 +452,9 @@ private:
     const AdjointFiniteDifferenceSpringDamperElement<SpringDamperElement<3>>  mAdjointFiniteDifferenceSpringDamperElement3D2N;
 
     // Adding interface elements
-    const SmallDisplacementInterfaceElement mSmallDisplacementInterfaceElement2D4N;
-    const SmallDisplacementInterfaceElement mSmallDisplacementInterfaceElement3D6N;
-    const SmallDisplacementInterfaceElement mSmallDisplacementInterfaceElement3D8N;
+    const FreeFieldInterfaceElement mFreeFieldInterfaceElement2D4N;
+    const FreeFieldInterfaceElement mFreeFieldInterfaceElement3D6N;
+    const FreeFieldInterfaceElement mFreeFieldInterfaceElement3D8N;
 
     /* CONDITIONS*/
     // Point load

@@ -229,9 +229,9 @@ KratosStructuralMechanicsApplication::KratosStructuralMechanicsApplication()
       mAdjointFiniteDifferencingSmallDisplacementElement3D8N(0, Element::GeometryType::Pointer(new Hexahedra3D8<NodeType >(Element::GeometryType::PointsArrayType(8)))),
       mAdjointFiniteDifferenceSpringDamperElement3D2N(0, Element::GeometryType::Pointer(new Line3D2<NodeType >(Element::GeometryType::PointsArrayType(2)))),
       // Adding the interface elements
-      mSmallDisplacementInterfaceElement2D4N(0, Element::GeometryType::Pointer( new QuadrilateralInterface2D4<NodeType >(Element::GeometryType::PointsArrayType(4)))),
-      mSmallDisplacementInterfaceElement3D6N(0, Element::GeometryType::Pointer( new PrismInterface3D6<NodeType >(Element::GeometryType::PointsArrayType(6)))),
-      mSmallDisplacementInterfaceElement3D8N(0, Element::GeometryType::Pointer( new HexahedraInterface3D8<NodeType >(Element::GeometryType::PointsArrayType(8)))),
+      mFreeFieldInterfaceElement2D4N(0, Element::GeometryType::Pointer( new QuadrilateralInterface2D4<NodeType >(Element::GeometryType::PointsArrayType(4)))),
+      mFreeFieldInterfaceElement3D6N(0, Element::GeometryType::Pointer( new PrismInterface3D6<NodeType >(Element::GeometryType::PointsArrayType(6)))),
+      mFreeFieldInterfaceElement3D8N(0, Element::GeometryType::Pointer( new HexahedraInterface3D8<NodeType >(Element::GeometryType::PointsArrayType(8)))),
 
       /* CONDITIONS */
       // Adding point load conditions
@@ -733,9 +733,9 @@ void KratosStructuralMechanicsApplication::Register() {
     KRATOS_REGISTER_ELEMENT("AdjointFiniteDifferenceSpringDamperElement3D2N", mAdjointFiniteDifferenceSpringDamperElement3D2N)
 
     //Register the interface elements
-    KRATOS_REGISTER_ELEMENT( "SmallDisplacementInterfaceElement2D4N", mSmallDisplacementInterfaceElement2D4N )
-    KRATOS_REGISTER_ELEMENT( "SmallDisplacementInterfaceElement3D6N", mSmallDisplacementInterfaceElement3D6N )
-    KRATOS_REGISTER_ELEMENT( "SmallDisplacementInterfaceElement3D8N", mSmallDisplacementInterfaceElement3D8N )
+    KRATOS_REGISTER_ELEMENT( "FreeFieldInterfaceElement2D4N", mFreeFieldInterfaceElement2D4N )
+    KRATOS_REGISTER_ELEMENT( "FreeFieldInterfaceElement3D6N", mFreeFieldInterfaceElement3D6N )
+    KRATOS_REGISTER_ELEMENT( "FreeFieldInterfaceElement3D8N", mFreeFieldInterfaceElement3D8N )
 
     // Register the conditions
     // Point loads

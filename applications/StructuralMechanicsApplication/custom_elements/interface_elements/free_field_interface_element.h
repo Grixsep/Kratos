@@ -40,7 +40,7 @@ namespace Kratos
 ///@{
 
 /**
- * @class SmallDisplacementInterfaceElement
+ * @class FreeFieldInterfaceElement
  * @ingroup StructuralMechanicsApplication
  * @brief Small displacement element for 2D and 3D geometries.
  * @details Implements a small displacement definition for structural analysis. This works for arbitrary geometries in 2D and 3D
@@ -48,7 +48,7 @@ namespace Kratos
  * @author Vicente Mataix Ferrandiz
  */
 
-class KRATOS_API(STRUCTURAL_MECHANICS_APPLICATION) SmallDisplacementInterfaceElement
+class KRATOS_API(STRUCTURAL_MECHANICS_APPLICATION) FreeFieldInterfaceElement
     : public BaseInterfaceElement
 {
 public:
@@ -70,24 +70,24 @@ public:
     /// The definition of the sizetype
     typedef std::size_t SizeType;
 
-    /// Counted pointer of SmallDisplacementInterfaceElement
-    KRATOS_CLASS_INTRUSIVE_POINTER_DEFINITION(SmallDisplacementInterfaceElement);
+    /// Counted pointer of FreeFieldInterfaceElement
+    KRATOS_CLASS_INTRUSIVE_POINTER_DEFINITION(FreeFieldInterfaceElement);
 
     ///@}
     ///@name Life Cycle
     ///@{
 
     /// Default constructor.
-    SmallDisplacementInterfaceElement(IndexType NewId, GeometryType::Pointer pGeometry);
-    SmallDisplacementInterfaceElement(IndexType NewId, GeometryType::Pointer pGeometry, PropertiesType::Pointer pProperties);
+    FreeFieldInterfaceElement(IndexType NewId, GeometryType::Pointer pGeometry);
+    FreeFieldInterfaceElement(IndexType NewId, GeometryType::Pointer pGeometry, PropertiesType::Pointer pProperties);
 
     // Copy constructor
-    SmallDisplacementInterfaceElement(SmallDisplacementInterfaceElement const& rOther)
+    FreeFieldInterfaceElement(FreeFieldInterfaceElement const& rOther)
         :BaseType(rOther)
     {};
 
     /// Destructor.
-    ~SmallDisplacementInterfaceElement() override;
+    ~FreeFieldInterfaceElement() override;
 
     ///@}
     ///@name Operators
@@ -181,7 +181,7 @@ protected:
     ///@name Protected Operators
     ///@{
 
-    SmallDisplacementInterfaceElement() : BaseInterfaceElement()
+    FreeFieldInterfaceElement() : BaseInterfaceElement()
     {
     }
 
@@ -189,6 +189,26 @@ protected:
      * @brief This method returns if the element provides the strain
      */
     bool UseElementProvidedStrain() const override;
+
+    /**
+     * @brief This functions calculates the Mass Matrix
+     * @param rMassMatrix The Mass Matrix
+     * @param rCurrentProcessInfo The current process info instance
+     */
+    void CalculateMassMatrix(
+        MatrixType& rMassMatrix,
+        const ProcessInfo& rCurrentProcessInfo
+        ) override;
+
+    /**
+     * @brief This functions calculates the Damping Matrix
+     * @param rDampingMatrix The Damping Matrix
+     * @param rCurrentProcessInfo The current process info instance
+     */
+    void CalculateDampingMatrix(
+        MatrixType& rDampingMatrix,
+        const ProcessInfo& rCurrentProcessInfo
+        ) override;
 
     /**
      * @brief This functions calculates both the RHS and the LHS
@@ -257,6 +277,20 @@ protected:
         const Vector& StrainVector
         ) const;
 
+    /**
+     * @brief Calculation of the stiffness matrix
+     * @param rLeftHandSideMatrix The local LHS of the element
+     * @param B The deformation matrix
+     * @param D The constitutive matrix
+     * @param IntegrationWeight The integration weight of the corresponding Gauss point
+     */
+    virtual void CalculateAndAddKm(
+        MatrixType& rLeftHandSideMatrix,
+        const Matrix& B,
+        const Matrix& D,
+        const double IntegrationWeight
+        ) const override;
+
     ///@}
     ///@name Protected Operations
     ///@{
@@ -311,12 +345,12 @@ private:
     ///@name Un accessible methods
     ///@{
     /// Assignment operator.
-    //SmallDisplacementInterfaceElement& operator=(const SmallDisplacementInterfaceElement& rOther);
+    //FreeFieldInterfaceElement& operator=(const FreeFieldInterfaceElement& rOther);
     /// Copy constructor.
-    //SmallDisplacementInterfaceElement(const SmallDisplacementInterfaceElement& rOther);
+    //FreeFieldInterfaceElement(const FreeFieldInterfaceElement& rOther);
     ///@}
 
-}; // Class SmallDisplacementInterfaceElement
+}; // Class FreeFieldInterfaceElement
 
 ///@}
 ///@name Type Definitions
