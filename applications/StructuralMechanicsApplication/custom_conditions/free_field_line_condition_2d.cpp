@@ -158,9 +158,9 @@ void FreeFieldLineCondition2D::CalculateAll(
         array_1d<double, 3> normal;
         MathUtils<double>::UnitCrossProduct(normal, tangent_xi, tangent_eta);
 
-        double density = 2675.0;
-        double wave_velocity_p = 4081.0;
-        double wave_velocity_s = 2200.0;
+        double density = this->GetValue(DENSITY);
+        double wave_velocity_p = this->GetValue(WAVE_VELOCITY_P);
+        double wave_velocity_s = this->GetValue(WAVE_VELOCITY_S);
 
         // Add free-field contributions
         for (IndexType ii = 0; ii < number_of_nodes; ++ii) {

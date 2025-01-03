@@ -6,9 +6,7 @@
 //  License:         BSD License
 //                   license: StructuralMechanicsApplication/license.txt
 //
-//  Main authors:    Riccardo Rossi
-//                   Vicente Mataix Ferrandiz
-//                   Alejandro Cornejo Velazquez
+//  Main authors:    Joaquin Irazabal Gonzalez
 //
 
 // System includes
@@ -21,7 +19,7 @@
 #include "utilities/atomic_utilities.h"
 
 // Application includes
-#include "base_solid_element.h"
+#include "base_interface_element.h"
 #include "structural_mechanics_application_variables.h"
 #include "custom_utilities/structural_mechanics_element_utilities.h"
 #include "custom_utilities/constitutive_law_utilities.h"
@@ -29,7 +27,7 @@
 namespace Kratos
 {
 
-void BaseSolidElement::Initialize(const ProcessInfo& rCurrentProcessInfo)
+void BaseInterfaceElement::Initialize(const ProcessInfo& rCurrentProcessInfo)
 {
     KRATOS_TRY
 
@@ -56,7 +54,7 @@ void BaseSolidElement::Initialize(const ProcessInfo& rCurrentProcessInfo)
                     mThisIntegrationMethod = GeometryData::IntegrationMethod::GI_GAUSS_5;
                     break;
                 default:
-                    KRATOS_WARNING("BaseSolidElement") << "Integration order " << integration_order << " is not available, using default integration order for the geometry" << std::endl;
+                    KRATOS_WARNING("BaseInterfaceElement") << "Integration order " << integration_order << " is not available, using default integration order for the geometry" << std::endl;
                     mThisIntegrationMethod = GetGeometry().GetDefaultIntegrationMethod();
                 }
             } else {
@@ -80,7 +78,7 @@ void BaseSolidElement::Initialize(const ProcessInfo& rCurrentProcessInfo)
 /***********************************************************************************/
 /***********************************************************************************/
 
-void BaseSolidElement::InitializeSolutionStep( const ProcessInfo& rCurrentProcessInfo )
+void BaseInterfaceElement::InitializeSolutionStep( const ProcessInfo& rCurrentProcessInfo )
 {
     bool required = false;
     for ( IndexType point_number = 0; point_number < mConstitutiveLawVector.size(); ++point_number ) {
@@ -143,7 +141,7 @@ void BaseSolidElement::InitializeSolutionStep( const ProcessInfo& rCurrentProces
 /***********************************************************************************/
 /***********************************************************************************/
 
-void BaseSolidElement::InitializeNonLinearIteration( const ProcessInfo& rCurrentProcessInfo )
+void BaseInterfaceElement::InitializeNonLinearIteration( const ProcessInfo& rCurrentProcessInfo )
 {
     const GeometryType& r_geometry = GetGeometry();
     const Properties& r_properties = GetProperties();
@@ -157,7 +155,7 @@ void BaseSolidElement::InitializeNonLinearIteration( const ProcessInfo& rCurrent
 /***********************************************************************************/
 /***********************************************************************************/
 
-void BaseSolidElement::FinalizeNonLinearIteration( const ProcessInfo& rCurrentProcessInfo )
+void BaseInterfaceElement::FinalizeNonLinearIteration( const ProcessInfo& rCurrentProcessInfo )
 {
     const GeometryType& r_geometry = GetGeometry();
     const Properties& r_properties = GetProperties();
@@ -171,7 +169,7 @@ void BaseSolidElement::FinalizeNonLinearIteration( const ProcessInfo& rCurrentPr
 /***********************************************************************************/
 /***********************************************************************************/
 
-void BaseSolidElement::FinalizeSolutionStep( const ProcessInfo& rCurrentProcessInfo )
+void BaseInterfaceElement::FinalizeSolutionStep( const ProcessInfo& rCurrentProcessInfo )
 {
     bool required = false;
     for ( IndexType point_number = 0; point_number < mConstitutiveLawVector.size(); ++point_number ) {
@@ -233,7 +231,7 @@ void BaseSolidElement::FinalizeSolutionStep( const ProcessInfo& rCurrentProcessI
 /***********************************************************************************/
 /***********************************************************************************/
 
-void BaseSolidElement::InitializeMaterial()
+void BaseInterfaceElement::InitializeMaterial()
 {
     KRATOS_TRY
 
@@ -254,7 +252,7 @@ void BaseSolidElement::InitializeMaterial()
 /***********************************************************************************/
 /***********************************************************************************/
 
-ConstitutiveLaw::StressMeasure BaseSolidElement::GetStressMeasure() const
+ConstitutiveLaw::StressMeasure BaseInterfaceElement::GetStressMeasure() const
 {
     return ConstitutiveLaw::StressMeasure_PK2;
 }
@@ -262,7 +260,7 @@ ConstitutiveLaw::StressMeasure BaseSolidElement::GetStressMeasure() const
 /***********************************************************************************/
 /***********************************************************************************/
 
-bool BaseSolidElement::UseElementProvidedStrain() const
+bool BaseInterfaceElement::UseElementProvidedStrain() const
 {
     return false;
 }
@@ -270,7 +268,7 @@ bool BaseSolidElement::UseElementProvidedStrain() const
 /***********************************************************************************/
 /***********************************************************************************/
 
-void BaseSolidElement::ResetConstitutiveLaw()
+void BaseInterfaceElement::ResetConstitutiveLaw()
 {
     KRATOS_TRY
 
@@ -288,16 +286,16 @@ void BaseSolidElement::ResetConstitutiveLaw()
 /***********************************************************************************/
 /***********************************************************************************/
 
-Element::Pointer BaseSolidElement::Clone (
+Element::Pointer BaseInterfaceElement::Clone (
     IndexType NewId,
     NodesArrayType const& rThisNodes
     ) const
 {
     KRATOS_TRY
 
-    KRATOS_WARNING("BaseSolidElement") << " Call BaseSolidElement (base class) Clone " << std::endl;
+    KRATOS_WARNING("BaseInterfaceElement") << " Call BaseInterfaceElement (base class) Clone " << std::endl;
 
-    BaseSolidElement::Pointer p_new_elem = Kratos::make_intrusive<BaseSolidElement>(NewId, GetGeometry().Create(rThisNodes), pGetProperties());
+    BaseInterfaceElement::Pointer p_new_elem = Kratos::make_intrusive<BaseInterfaceElement>(NewId, GetGeometry().Create(rThisNodes), pGetProperties());
     p_new_elem->SetData(this->GetData());
     p_new_elem->Set(Flags(*this));
 
@@ -315,7 +313,7 @@ Element::Pointer BaseSolidElement::Clone (
 /***********************************************************************************/
 /***********************************************************************************/
 
-void BaseSolidElement::EquationIdVector(
+void BaseInterfaceElement::EquationIdVector(
     EquationIdVectorType& rResult,
     const ProcessInfo& rCurrentProcessInfo
     ) const
@@ -352,7 +350,7 @@ void BaseSolidElement::EquationIdVector(
 /***********************************************************************************/
 /***********************************************************************************/
 
-void BaseSolidElement::GetDofList(
+void BaseInterfaceElement::GetDofList(
     DofsVectorType& rElementalDofList,
     const ProcessInfo& rCurrentProcessInfo
     ) const
@@ -384,7 +382,7 @@ void BaseSolidElement::GetDofList(
 /***********************************************************************************/
 /***********************************************************************************/
 
-void BaseSolidElement::GetValuesVector(
+void BaseInterfaceElement::GetValuesVector(
     Vector& rValues,
     int Step
     ) const
@@ -407,7 +405,7 @@ void BaseSolidElement::GetValuesVector(
 /***********************************************************************************/
 /***********************************************************************************/
 
-void BaseSolidElement::GetFirstDerivativesVector(
+void BaseInterfaceElement::GetFirstDerivativesVector(
     Vector& rValues,
     int Step
     ) const
@@ -429,7 +427,7 @@ void BaseSolidElement::GetFirstDerivativesVector(
 /***********************************************************************************/
 /***********************************************************************************/
 
-void BaseSolidElement::GetSecondDerivativesVector(
+void BaseInterfaceElement::GetSecondDerivativesVector(
     Vector& rValues,
     int Step
     ) const
@@ -451,7 +449,7 @@ void BaseSolidElement::GetSecondDerivativesVector(
 /***********************************************************************************/
 /***********************************************************************************/
 
-void BaseSolidElement::AddExplicitContribution(
+void BaseInterfaceElement::AddExplicitContribution(
     const VectorType& rRHSVector,
     const Variable<VectorType>& rRHSVariable,
     const Variable<double>& rDestinationVariable,
@@ -483,7 +481,7 @@ void BaseSolidElement::AddExplicitContribution(
 /***********************************************************************************/
 /***********************************************************************************/
 
-void BaseSolidElement::AddExplicitContribution(
+void BaseInterfaceElement::AddExplicitContribution(
     const VectorType& rRHSVector,
     const Variable<VectorType>& rRHSVariable,
     const Variable<array_1d<double, 3>>& rDestinationVariable,
@@ -531,7 +529,7 @@ void BaseSolidElement::AddExplicitContribution(
 /***********************************************************************************/
 /***********************************************************************************/
 
-void BaseSolidElement::CalculateLocalSystem(
+void BaseInterfaceElement::CalculateLocalSystem(
     MatrixType& rLeftHandSideMatrix,
     VectorType& rRightHandSideVector,
     const ProcessInfo& rCurrentProcessInfo
@@ -551,7 +549,7 @@ void BaseSolidElement::CalculateLocalSystem(
 /***********************************************************************************/
 /***********************************************************************************/
 
-void BaseSolidElement::CalculateLeftHandSide(MatrixType& rLeftHandSideMatrix,
+void BaseInterfaceElement::CalculateLeftHandSide(MatrixType& rLeftHandSideMatrix,
                                              const ProcessInfo& rCurrentProcessInfo)
 {
     KRATOS_TRY;
@@ -569,7 +567,7 @@ void BaseSolidElement::CalculateLeftHandSide(MatrixType& rLeftHandSideMatrix,
 /***********************************************************************************/
 /***********************************************************************************/
 
-void BaseSolidElement::CalculateRightHandSide(
+void BaseInterfaceElement::CalculateRightHandSide(
     VectorType& rRightHandSideVector,
     const ProcessInfo& rCurrentProcessInfo
     )
@@ -589,7 +587,7 @@ void BaseSolidElement::CalculateRightHandSide(
 /***********************************************************************************/
 /***********************************************************************************/
 
-void BaseSolidElement::CalculateMassMatrix(
+void BaseInterfaceElement::CalculateMassMatrix(
     MatrixType& rMassMatrix,
     const ProcessInfo& rCurrentProcessInfo
     )
@@ -658,7 +656,7 @@ void BaseSolidElement::CalculateMassMatrix(
 /***********************************************************************************/
 /***********************************************************************************/
 
-void BaseSolidElement::CalculateDampingMatrix(
+void BaseInterfaceElement::CalculateDampingMatrix(
     MatrixType& rDampingMatrix,
     const ProcessInfo& rCurrentProcessInfo
     )
@@ -675,7 +673,7 @@ void BaseSolidElement::CalculateDampingMatrix(
 /***********************************************************************************/
 /***********************************************************************************/
 
-void BaseSolidElement::CalculateOnIntegrationPoints(
+void BaseInterfaceElement::CalculateOnIntegrationPoints(
     const Variable<bool>& rVariable,
     std::vector<bool>& rOutput,
     const ProcessInfo& rCurrentProcessInfo
@@ -708,7 +706,7 @@ void BaseSolidElement::CalculateOnIntegrationPoints(
 /***********************************************************************************/
 /***********************************************************************************/
 
-void BaseSolidElement::CalculateOnIntegrationPoints(
+void BaseInterfaceElement::CalculateOnIntegrationPoints(
     const Variable<int>& rVariable,
     std::vector<int>& rOutput,
     const ProcessInfo& rCurrentProcessInfo
@@ -730,7 +728,7 @@ void BaseSolidElement::CalculateOnIntegrationPoints(
 /***********************************************************************************/
 /***********************************************************************************/
 
-void BaseSolidElement::CalculateOnIntegrationPoints(
+void BaseInterfaceElement::CalculateOnIntegrationPoints(
     const Variable<double>& rVariable,
     std::vector<double>& rOutput,
     const ProcessInfo& rCurrentProcessInfo
@@ -926,7 +924,7 @@ void BaseSolidElement::CalculateOnIntegrationPoints(
 /***********************************************************************************/
 /***********************************************************************************/
 
-void BaseSolidElement::CalculateOnIntegrationPoints(
+void BaseInterfaceElement::CalculateOnIntegrationPoints(
     const Variable<array_1d<double, 3>>& rVariable,
     std::vector<array_1d<double, 3>>& rOutput,
     const ProcessInfo& rCurrentProcessInfo
@@ -975,7 +973,7 @@ void BaseSolidElement::CalculateOnIntegrationPoints(
 /***********************************************************************************/
 /***********************************************************************************/
 
-void BaseSolidElement::CalculateOnIntegrationPoints(
+void BaseInterfaceElement::CalculateOnIntegrationPoints(
     const Variable<array_1d<double, 6>>& rVariable,
     std::vector<array_1d<double, 6>>& rOutput,
     const ProcessInfo& rCurrentProcessInfo
@@ -997,7 +995,7 @@ void BaseSolidElement::CalculateOnIntegrationPoints(
 /***********************************************************************************/
 /***********************************************************************************/
 
-void BaseSolidElement::CalculateOnIntegrationPoints(
+void BaseInterfaceElement::CalculateOnIntegrationPoints(
     const Variable<Vector>& rVariable,
     std::vector<Vector>& rOutput,
     const ProcessInfo& rCurrentProcessInfo
@@ -1148,7 +1146,7 @@ void BaseSolidElement::CalculateOnIntegrationPoints(
 /***********************************************************************************/
 /***********************************************************************************/
 
-void BaseSolidElement::CalculateOnIntegrationPoints(
+void BaseInterfaceElement::CalculateOnIntegrationPoints(
     const Variable<Matrix>& rVariable,
     std::vector<Matrix>& rOutput,
     const ProcessInfo& rCurrentProcessInfo
@@ -1258,7 +1256,7 @@ void BaseSolidElement::CalculateOnIntegrationPoints(
 /***********************************************************************************/
 /***********************************************************************************/
 
-void BaseSolidElement::CalculateOnIntegrationPoints(
+void BaseInterfaceElement::CalculateOnIntegrationPoints(
     const Variable<ConstitutiveLaw::Pointer>& rVariable,
     std::vector<ConstitutiveLaw::Pointer>& rValues,
     const ProcessInfo& rCurrentProcessInfo
@@ -1278,7 +1276,7 @@ void BaseSolidElement::CalculateOnIntegrationPoints(
 /***********************************************************************************/
 /***********************************************************************************/
 
-void BaseSolidElement::SetValuesOnIntegrationPoints(
+void BaseInterfaceElement::SetValuesOnIntegrationPoints(
     const Variable<bool>& rVariable,
     const std::vector<bool>& rValues,
     const ProcessInfo& rCurrentProcessInfo
@@ -1289,14 +1287,14 @@ void BaseSolidElement::SetValuesOnIntegrationPoints(
             mConstitutiveLawVector[point_number]->SetValue( rVariable,rValues[point_number], rCurrentProcessInfo);
         }
     } else {
-        KRATOS_WARNING("BaseSolidElement") << "The variable " << rVariable << " is not implemented in the current ConstitutiveLaw" << std::endl;
+        KRATOS_WARNING("BaseInterfaceElement") << "The variable " << rVariable << " is not implemented in the current ConstitutiveLaw" << std::endl;
     }
 }
 
 /***********************************************************************************/
 /***********************************************************************************/
 
-void BaseSolidElement::SetValuesOnIntegrationPoints(
+void BaseInterfaceElement::SetValuesOnIntegrationPoints(
     const Variable<int>& rVariable,
     const std::vector<int>& rValues,
     const ProcessInfo& rCurrentProcessInfo
@@ -1307,14 +1305,14 @@ void BaseSolidElement::SetValuesOnIntegrationPoints(
             mConstitutiveLawVector[point_number]->SetValue( rVariable,rValues[point_number], rCurrentProcessInfo);
         }
     } else {
-        KRATOS_WARNING("BaseSolidElement") << "The variable " << rVariable << " is not implemented in the current ConstitutiveLaw" << std::endl;
+        KRATOS_WARNING("BaseInterfaceElement") << "The variable " << rVariable << " is not implemented in the current ConstitutiveLaw" << std::endl;
     }
 }
 
 /***********************************************************************************/
 /***********************************************************************************/
 
-void BaseSolidElement::SetValuesOnIntegrationPoints(
+void BaseInterfaceElement::SetValuesOnIntegrationPoints(
     const Variable<double>& rVariable,
     const std::vector<double>& rValues,
     const ProcessInfo& rCurrentProcessInfo
@@ -1325,14 +1323,14 @@ void BaseSolidElement::SetValuesOnIntegrationPoints(
             mConstitutiveLawVector[point_number]->SetValue( rVariable,rValues[point_number], rCurrentProcessInfo);
         }
     } else {
-        KRATOS_WARNING("BaseSolidElement") << "The variable " << rVariable << " is not implemented in the current ConstitutiveLaw" << std::endl;
+        KRATOS_WARNING("BaseInterfaceElement") << "The variable " << rVariable << " is not implemented in the current ConstitutiveLaw" << std::endl;
     }
 }
 
 /***********************************************************************************/
 /***********************************************************************************/
 
-void BaseSolidElement::SetValuesOnIntegrationPoints(
+void BaseInterfaceElement::SetValuesOnIntegrationPoints(
     const Variable<Vector>& rVariable,
     const std::vector<Vector>& rValues,
     const ProcessInfo& rCurrentProcessInfo
@@ -1343,14 +1341,14 @@ void BaseSolidElement::SetValuesOnIntegrationPoints(
             mConstitutiveLawVector[point_number]->SetValue( rVariable,rValues[point_number], rCurrentProcessInfo);
         }
     } else {
-        KRATOS_WARNING("BaseSolidElement") << "The variable " << rVariable << " is not implemented in the current ConstitutiveLaw" << std::endl;
+        KRATOS_WARNING("BaseInterfaceElement") << "The variable " << rVariable << " is not implemented in the current ConstitutiveLaw" << std::endl;
     }
 }
 
 /***********************************************************************************/
 /***********************************************************************************/
 
-void BaseSolidElement::SetValuesOnIntegrationPoints(
+void BaseInterfaceElement::SetValuesOnIntegrationPoints(
     const Variable<ConstitutiveLaw::Pointer>& rVariable,
     const std::vector<ConstitutiveLaw::Pointer>& rValues,
     const ProcessInfo& rCurrentProcessInfo
@@ -1367,7 +1365,7 @@ void BaseSolidElement::SetValuesOnIntegrationPoints(
 /***********************************************************************************/
 /***********************************************************************************/
 
-void BaseSolidElement::SetValuesOnIntegrationPoints(
+void BaseInterfaceElement::SetValuesOnIntegrationPoints(
     const Variable<array_1d<double, 3 > >& rVariable,
     const std::vector<array_1d<double, 3>>& rValues,
     const ProcessInfo& rCurrentProcessInfo
@@ -1378,14 +1376,14 @@ void BaseSolidElement::SetValuesOnIntegrationPoints(
             mConstitutiveLawVector[point_number]->SetValue( rVariable,rValues[point_number], rCurrentProcessInfo);
         }
     } else {
-        KRATOS_WARNING("BaseSolidElement") << "The variable " << rVariable << " is not implemented in the current ConstitutiveLaw" << std::endl;
+        KRATOS_WARNING("BaseInterfaceElement") << "The variable " << rVariable << " is not implemented in the current ConstitutiveLaw" << std::endl;
     }
 }
 
 /***********************************************************************************/
 /***********************************************************************************/
 
-void BaseSolidElement::SetValuesOnIntegrationPoints(
+void BaseInterfaceElement::SetValuesOnIntegrationPoints(
     const Variable<array_1d<double, 6>>& rVariable,
     const std::vector<array_1d<double, 6>>& rValues,
     const ProcessInfo& rCurrentProcessInfo
@@ -1396,14 +1394,14 @@ void BaseSolidElement::SetValuesOnIntegrationPoints(
             mConstitutiveLawVector[point_number]->SetValue( rVariable,rValues[point_number], rCurrentProcessInfo);
         }
     } else {
-        KRATOS_WARNING("BaseSolidElement") << "The variable " << rVariable << " is not implemented in the current ConstitutiveLaw" << std::endl;
+        KRATOS_WARNING("BaseInterfaceElement") << "The variable " << rVariable << " is not implemented in the current ConstitutiveLaw" << std::endl;
     }
 }
 
 /***********************************************************************************/
 /***********************************************************************************/
 
-void BaseSolidElement::SetValuesOnIntegrationPoints(
+void BaseInterfaceElement::SetValuesOnIntegrationPoints(
     const Variable<Matrix>& rVariable,
     const std::vector<Matrix>& rValues,
     const ProcessInfo& rCurrentProcessInfo
@@ -1414,14 +1412,14 @@ void BaseSolidElement::SetValuesOnIntegrationPoints(
             mConstitutiveLawVector[point_number]->SetValue( rVariable,rValues[point_number], rCurrentProcessInfo);
         }
     } else {
-        KRATOS_WARNING("BaseSolidElement") << "The variable " << rVariable << " is not implemented in the current ConstitutiveLaw" << std::endl;
+        KRATOS_WARNING("BaseInterfaceElement") << "The variable " << rVariable << " is not implemented in the current ConstitutiveLaw" << std::endl;
     }
 }
 
 /***********************************************************************************/
 /***********************************************************************************/
 
-int  BaseSolidElement::Check( const ProcessInfo& rCurrentProcessInfo ) const
+int  BaseInterfaceElement::Check( const ProcessInfo& rCurrentProcessInfo ) const
 {
     KRATOS_TRY;
 
@@ -1438,7 +1436,7 @@ int  BaseSolidElement::Check( const ProcessInfo& rCurrentProcessInfo ) const
 /***********************************************************************************/
 /***********************************************************************************/
 
-void BaseSolidElement::CalculateAll(
+void BaseInterfaceElement::CalculateAll(
     MatrixType& rLeftHandSideMatrix,
     VectorType& rRightHandSideVector,
     const ProcessInfo& rCurrentProcessInfo,
@@ -1452,7 +1450,7 @@ void BaseSolidElement::CalculateAll(
 //***********************************************************************
 //***********************************************************************
 
-double BaseSolidElement::GetIntegrationWeight(
+double BaseInterfaceElement::GetIntegrationWeight(
     const GeometryType::IntegrationPointsArrayType& rThisIntegrationPoints,
     const IndexType PointNumber,
     const double detJ
@@ -1464,7 +1462,7 @@ double BaseSolidElement::GetIntegrationWeight(
 //***********************************************************************
 //***********************************************************************
 
-void BaseSolidElement::CalculateShapeGradientOfMassMatrix(MatrixType& rMassMatrix, ShapeParameter Deriv) const
+void BaseInterfaceElement::CalculateShapeGradientOfMassMatrix(MatrixType& rMassMatrix, ShapeParameter Deriv) const
 {
     KRATOS_TRY;
 
@@ -1528,7 +1526,7 @@ void BaseSolidElement::CalculateShapeGradientOfMassMatrix(MatrixType& rMassMatri
 /***********************************************************************************/
 /***********************************************************************************/
 
-void BaseSolidElement::CalculateKinematicVariables(
+void BaseInterfaceElement::CalculateKinematicVariables(
     KinematicVariables& rThisKinematicVariables,
     const IndexType PointNumber,
     const GeometryType::IntegrationMethod& rIntegrationMethod
@@ -1540,7 +1538,7 @@ void BaseSolidElement::CalculateKinematicVariables(
 /***********************************************************************************/
 /***********************************************************************************/
 
-void BaseSolidElement::CalculateConstitutiveVariables(
+void BaseInterfaceElement::CalculateConstitutiveVariables(
     KinematicVariables& rThisKinematicVariables,
     ConstitutiveVariables& rThisConstitutiveVariables,
     ConstitutiveLaw::Parameters& rValues,
@@ -1568,7 +1566,7 @@ void BaseSolidElement::CalculateConstitutiveVariables(
 /***********************************************************************************/
 /***********************************************************************************/
 
-void BaseSolidElement::BuildRotationSystem(
+void BaseInterfaceElement::BuildRotationSystem(
     BoundedMatrix<double, 3, 3>& rRotationMatrix,
     const SizeType StrainSize
     )
@@ -1595,7 +1593,7 @@ void BaseSolidElement::BuildRotationSystem(
 /***********************************************************************************/
 /***********************************************************************************/
 
-void BaseSolidElement::RotateToLocalAxes(
+void BaseInterfaceElement::RotateToLocalAxes(
     ConstitutiveLaw::Parameters& rValues,
     KinematicVariables& rThisKinematicVariables
     )
@@ -1628,7 +1626,7 @@ void BaseSolidElement::RotateToLocalAxes(
 /***********************************************************************************/
 /***********************************************************************************/
 
-void BaseSolidElement::RotateToGlobalAxes(
+void BaseInterfaceElement::RotateToGlobalAxes(
     ConstitutiveLaw::Parameters& rValues,
     KinematicVariables& rThisKinematicVariables
     )
@@ -1680,7 +1678,7 @@ void BaseSolidElement::RotateToGlobalAxes(
 /***********************************************************************************/
 /***********************************************************************************/
 
-void BaseSolidElement::SetConstitutiveVariables(
+void BaseInterfaceElement::SetConstitutiveVariables(
     KinematicVariables& rThisKinematicVariables,
     ConstitutiveVariables& rThisConstitutiveVariables,
     ConstitutiveLaw::Parameters& rValues,
@@ -1701,7 +1699,7 @@ void BaseSolidElement::SetConstitutiveVariables(
 /***********************************************************************************/
 /***********************************************************************************/
 
-Matrix& BaseSolidElement::CalculateDeltaDisplacement(Matrix& DeltaDisplacement) const
+Matrix& BaseInterfaceElement::CalculateDeltaDisplacement(Matrix& DeltaDisplacement) const
 {
     KRATOS_TRY
 
@@ -1726,7 +1724,7 @@ Matrix& BaseSolidElement::CalculateDeltaDisplacement(Matrix& DeltaDisplacement) 
 /***********************************************************************************/
 /***********************************************************************************/
 
-double BaseSolidElement::CalculateDerivativesOnReferenceConfiguration(
+double BaseInterfaceElement::CalculateDerivativesOnReferenceConfiguration(
     Matrix& rJ0,
     Matrix& rInvJ0,
     Matrix& rDN_DX,
@@ -1758,7 +1756,7 @@ double BaseSolidElement::CalculateDerivativesOnReferenceConfiguration(
 /***********************************************************************************/
 /***********************************************************************************/
 
-double BaseSolidElement::CalculateDerivativesOnCurrentConfiguration(
+double BaseInterfaceElement::CalculateDerivativesOnCurrentConfiguration(
     Matrix& rJ,
     Matrix& rInvJ,
     Matrix& rDN_DX,
@@ -1786,7 +1784,7 @@ double BaseSolidElement::CalculateDerivativesOnCurrentConfiguration(
 /***********************************************************************************/
 /***********************************************************************************/
 
-array_1d<double, 3> BaseSolidElement::GetBodyForce(
+array_1d<double, 3> BaseInterfaceElement::GetBodyForce(
     const GeometryType::IntegrationPointsArrayType& rIntegrationPoints,
     const IndexType PointNumber
     ) const
@@ -1797,7 +1795,7 @@ array_1d<double, 3> BaseSolidElement::GetBodyForce(
 /***********************************************************************************/
 /***********************************************************************************/
 
-void BaseSolidElement::CalculateAndAddKm(
+void BaseInterfaceElement::CalculateAndAddKm(
     MatrixType& rLeftHandSideMatrix,
     const Matrix& B,
     const Matrix& D,
@@ -1814,7 +1812,7 @@ void BaseSolidElement::CalculateAndAddKm(
 /***********************************************************************************/
 /***********************************************************************************/
 
-void BaseSolidElement::CalculateAndAddKg(
+void BaseInterfaceElement::CalculateAndAddKg(
     MatrixType& rLeftHandSideMatrix,
     const Matrix& DN_DX,
     const Vector& StressVector,
@@ -1835,7 +1833,7 @@ void BaseSolidElement::CalculateAndAddKg(
 /***********************************************************************************/
 /***********************************************************************************/
 
-void BaseSolidElement::CalculateAndAddResidualVector(
+void BaseInterfaceElement::CalculateAndAddResidualVector(
     VectorType& rRightHandSideVector,
     const KinematicVariables& rThisKinematicVariables,
     const ProcessInfo& rCurrentProcessInfo,
@@ -1858,7 +1856,7 @@ void BaseSolidElement::CalculateAndAddResidualVector(
 /***********************************************************************************/
 /***********************************************************************************/
 
-void BaseSolidElement::CalculateAndAddExtForceContribution(
+void BaseInterfaceElement::CalculateAndAddExtForceContribution(
     const Vector& rN,
     const ProcessInfo& rCurrentProcessInfo,
     const array_1d<double, 3>& rBodyForce,
@@ -1884,7 +1882,7 @@ void BaseSolidElement::CalculateAndAddExtForceContribution(
 /***********************************************************************************/
 /***********************************************************************************/
 
-void BaseSolidElement::CalculateLumpedMassVector(
+void BaseInterfaceElement::CalculateLumpedMassVector(
     VectorType& rLumpedMassVector,
     const ProcessInfo& rCurrentProcessInfo
     ) const
@@ -1926,7 +1924,7 @@ void BaseSolidElement::CalculateLumpedMassVector(
 /***********************************************************************************/
 /***********************************************************************************/
 
-void BaseSolidElement::CalculateDampingMatrixWithLumpedMass(
+void BaseInterfaceElement::CalculateDampingMatrixWithLumpedMass(
     MatrixType& rDampingMatrix,
     const ProcessInfo& rCurrentProcessInfo
     )
@@ -1984,7 +1982,7 @@ void BaseSolidElement::CalculateDampingMatrixWithLumpedMass(
 /***********************************************************************************/
 /***********************************************************************************/
 
-const Parameters BaseSolidElement::GetSpecifications() const
+const Parameters BaseInterfaceElement::GetSpecifications() const
 {
     const Parameters specifications = Parameters(R"({
         "time_integration"           : ["static","implicit","explicit"],
@@ -2026,7 +2024,7 @@ const Parameters BaseSolidElement::GetSpecifications() const
 /***********************************************************************************/
 /***********************************************************************************/
 
-bool BaseSolidElement::IsElementRotated() const
+bool BaseInterfaceElement::IsElementRotated() const
 {
     if (mConstitutiveLawVector[0]->GetStrainSize() == 6) {
         return (this->Has(LOCAL_AXIS_1) && this->Has(LOCAL_AXIS_2));
@@ -2039,7 +2037,7 @@ bool BaseSolidElement::IsElementRotated() const
 /***********************************************************************************/
 /***********************************************************************************/
 
-void BaseSolidElement::save( Serializer& rSerializer ) const
+void BaseInterfaceElement::save( Serializer& rSerializer ) const
 {
     KRATOS_SERIALIZE_SAVE_BASE_CLASS( rSerializer, Element );
     int IntMethod = int(this->GetIntegrationMethod());
@@ -2050,7 +2048,7 @@ void BaseSolidElement::save( Serializer& rSerializer ) const
 /***********************************************************************************/
 /***********************************************************************************/
 
-void BaseSolidElement::load( Serializer& rSerializer )
+void BaseInterfaceElement::load( Serializer& rSerializer )
 {
     KRATOS_SERIALIZE_LOAD_BASE_CLASS( rSerializer, Element );
     int IntMethod;

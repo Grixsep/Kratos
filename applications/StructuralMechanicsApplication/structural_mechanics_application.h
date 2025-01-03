@@ -91,6 +91,9 @@
 #include "custom_elements/beam_elements/timoshenko_beam_element_2D3N.h"
 #include "custom_elements/beam_elements/timoshenko_curved_beam_element_2D3N.h"
 
+/* Adding the interface elements */
+#include "custom_elements/interface_elements/small_displacement_interface_element.h"
+
 /* Conditions */
 #include "custom_conditions/base_load_condition.h"
 #include "custom_conditions/point_load_condition.h"
@@ -123,7 +126,8 @@
 #include "custom_constitutive/user_provided_linear_elastic_law.h"
 // Constitutive laws for the Timoshenko beams
 #include "custom_constitutive/timoshenko_beam_elastic_constitutive_law.h"
-
+// Constitutive laws for the Free Field elements
+#include "custom_constitutive/free_field_constitutive_law.h"
 
 namespace Kratos
 {
@@ -447,6 +451,11 @@ private:
     const AdjointFiniteDifferencingSmallDisplacementElement<SmallDisplacement> mAdjointFiniteDifferencingSmallDisplacementElement3D8N;
     const AdjointFiniteDifferenceSpringDamperElement<SpringDamperElement<3>>  mAdjointFiniteDifferenceSpringDamperElement3D2N;
 
+    // Adding interface elements
+    const SmallDisplacementInterfaceElement mSmallDisplacementInterfaceElement2D4N;
+    const SmallDisplacementInterfaceElement mSmallDisplacementInterfaceElement3D6N;
+    const SmallDisplacementInterfaceElement mSmallDisplacementInterfaceElement3D8N;
+
     /* CONDITIONS*/
     // Point load
     const PointLoadCondition mPointLoadCondition2D1N;
@@ -527,6 +536,7 @@ private:
     const UserProvidedLinearElasticLaw<2> mUserProvidedLinearElastic2DLaw;
     const UserProvidedLinearElasticLaw<3> mUserProvidedLinearElastic3DLaw;
     const TimoshenkoBeamElasticConstitutiveLaw mTimoshenkoBeamElasticConstitutiveLaw;
+    const FreeFieldConstitutiveLaw mFreeFieldConstitutiveLaw;
 
     ///@}
     ///@name Private Operators

@@ -53,6 +53,10 @@
 #include "geometries/quadrilateral_2d_8.h"
 #include "geometries/quadrilateral_2d_9.h"
 
+#include "geometries/prism_interface_3d_6.h"
+#include "geometries/hexahedra_interface_3d_8.h"
+#include "geometries/quadrilateral_interface_2d_4.h"
+
 namespace Kratos {
 
     // We define the node type
@@ -224,6 +228,10 @@ KratosStructuralMechanicsApplication::KratosStructuralMechanicsApplication()
       mAdjointFiniteDifferencingSmallDisplacementElement3D6N(0, Element::GeometryType::Pointer(new Prism3D6<NodeType >(Element::GeometryType::PointsArrayType(6)))),
       mAdjointFiniteDifferencingSmallDisplacementElement3D8N(0, Element::GeometryType::Pointer(new Hexahedra3D8<NodeType >(Element::GeometryType::PointsArrayType(8)))),
       mAdjointFiniteDifferenceSpringDamperElement3D2N(0, Element::GeometryType::Pointer(new Line3D2<NodeType >(Element::GeometryType::PointsArrayType(2)))),
+      // Adding the interface elements
+      mSmallDisplacementInterfaceElement2D4N(0, Element::GeometryType::Pointer( new QuadrilateralInterface2D4<NodeType >(Element::GeometryType::PointsArrayType(4)))),
+      mSmallDisplacementInterfaceElement3D6N(0, Element::GeometryType::Pointer( new PrismInterface3D6<NodeType >(Element::GeometryType::PointsArrayType(6)))),
+      mSmallDisplacementInterfaceElement3D8N(0, Element::GeometryType::Pointer( new HexahedraInterface3D8<NodeType >(Element::GeometryType::PointsArrayType(8)))),
 
       /* CONDITIONS */
       // Adding point load conditions
@@ -537,6 +545,10 @@ void KratosStructuralMechanicsApplication::Register() {
 
     KRATOS_REGISTER_VARIABLE( USE_LUMPED_MASS_MATRIX );
 
+    // Variables for the boundary conditions in seismic problems
+    KRATOS_REGISTER_VARIABLE( WAVE_VELOCITY_P );
+    KRATOS_REGISTER_VARIABLE( WAVE_VELOCITY_S );
+
     // for DEM-FEM 2D
     KRATOS_REGISTER_VARIABLE(IMPOSED_Z_STRAIN_VALUE)
     KRATOS_REGISTER_VARIABLE(IMPOSED_Z_STRAIN_OPTION)
@@ -720,6 +732,11 @@ void KratosStructuralMechanicsApplication::Register() {
     KRATOS_REGISTER_ELEMENT("AdjointFiniteDifferencingSmallDisplacementElement3D8N", mAdjointFiniteDifferencingSmallDisplacementElement3D8N)
     KRATOS_REGISTER_ELEMENT("AdjointFiniteDifferenceSpringDamperElement3D2N", mAdjointFiniteDifferenceSpringDamperElement3D2N)
 
+    //Register the interface elements
+    KRATOS_REGISTER_ELEMENT( "SmallDisplacementInterfaceElement2D4N", mSmallDisplacementInterfaceElement2D4N )
+    KRATOS_REGISTER_ELEMENT( "SmallDisplacementInterfaceElement3D6N", mSmallDisplacementInterfaceElement3D6N )
+    KRATOS_REGISTER_ELEMENT( "SmallDisplacementInterfaceElement3D8N", mSmallDisplacementInterfaceElement3D8N )
+
     // Register the conditions
     // Point loads
     KRATOS_REGISTER_CONDITION("PointLoadCondition2D1N", mPointLoadCondition2D1N)
@@ -799,6 +816,7 @@ void KratosStructuralMechanicsApplication::Register() {
     KRATOS_REGISTER_CONSTITUTIVE_LAW("UserProvidedLinearElastic2DLaw", mUserProvidedLinearElastic2DLaw);
     KRATOS_REGISTER_CONSTITUTIVE_LAW("UserProvidedLinearElastic3DLaw", mUserProvidedLinearElastic3DLaw);
     KRATOS_REGISTER_CONSTITUTIVE_LAW("TimoshenkoBeamElasticConstitutiveLaw", mTimoshenkoBeamElasticConstitutiveLaw);
+    KRATOS_REGISTER_CONSTITUTIVE_LAW("FreeFieldConstitutiveLaw", mFreeFieldConstitutiveLaw);
 
 }
 }  // namespace Kratos.
