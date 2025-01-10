@@ -142,9 +142,9 @@ void FreeFieldInterfaceElement::CalculateDampingMatrix(
     noalias(rDampingMatrix) = ZeroMatrix(mat_size, mat_size);
 
     // Get material properties
-    const double density = 2675.0;
-    const double cp = 4081.0;
-    const double cs = 2200.0;
+    double density = this->GetValue(DENSITY);
+    double wave_velocity_p = this->GetValue(WAVE_VELOCITY_P);
+    double wave_velocity_s = this->GetValue(WAVE_VELOCITY_S);
 
     // Calculate element height
     double height = 0.0;
@@ -163,14 +163,14 @@ void FreeFieldInterfaceElement::CalculateDampingMatrix(
 
     // Calculate damping matrix elements (Asymmetric matrix)
     // Nielsen, A. H. (2006, May). Absorbing boundary conditions for seismic analysis in ABAQUS. In ABAQUS users’ conference (pp. 359-376).
-    rDampingMatrix(2, 2) = 0.5 * height * density * cp; // c22
-    rDampingMatrix(4, 4) = 0.5 * height * density * cp; // c44
-    rDampingMatrix(2, 0) = -0.5 * height * density * cp; // c20
-    rDampingMatrix(4, 6) = -0.5 * height * density * cp; // c46
-    rDampingMatrix(3, 3) = 0.5 * height * density * cs; // c33
-    rDampingMatrix(5, 5) = 0.5 * height * density * cs; // c55
-    rDampingMatrix(3, 1) = -0.5 * height * density * cs; // c31
-    rDampingMatrix(5, 7) = -0.5 * height * density * cs; // c57
+    rDampingMatrix(2, 2) = 0.5 * height * density * wave_velocity_p; // c22
+    rDampingMatrix(4, 4) = 0.5 * height * density * wave_velocity_p; // c44
+    rDampingMatrix(2, 0) = -0.5 * height * density * wave_velocity_p; // c20
+    rDampingMatrix(4, 6) = -0.5 * height * density * wave_velocity_p; // c46
+    rDampingMatrix(3, 3) = 0.5 * height * density * wave_velocity_s; // c33
+    rDampingMatrix(5, 5) = 0.5 * height * density * wave_velocity_s; // c55
+    rDampingMatrix(3, 1) = -0.5 * height * density * wave_velocity_s; // c31
+    rDampingMatrix(5, 7) = -0.5 * height * density * wave_velocity_s; // c57
 
     KRATOS_CATCH("")
 }
@@ -379,24 +379,55 @@ void FreeFieldInterfaceElement::CalculateAndAddKm(
 
     noalias(rLeftHandSideMatrix) = ZeroMatrix(mat_size, mat_size);
 
+    // Get material properties
+    double n_dir = this->GetValue(NORMAL_DIRECTION);
+
+    const double young = 34e9;
+    const double poisson = 0.29;
+    const double lambda = young * poisson / ((1.0 + poisson) * (1.0 - 2.0 * poisson));
+    const double mu = young / (2.0 * (1.0 + poisson));
+
+    // Calculate element height and length
+    double length = 0.0;
+    double height = 0.0;
+    if (dimension == 2 && number_of_nodes == 4) {
+        // Assuming a quadrilateral element
+        const auto& node1 = r_geometry[0];
+        const auto& node2 = r_geometry[1];
+        const auto& node3 = r_geometry[2];
+        const auto& node4 = r_geometry[3];
+
+        // Calculate the height as the average distance between opposite sides
+        double length1 = std::abs(node1.X() - node2.X());
+        double length2 = std::abs(node3.X() - node4.X());
+        length = 0.5 * (length1 + length2);
+
+        // Calculate the height as the average distance between opposite sides
+        double height1 = std::abs(node1.Y() - node4.Y());
+        double height2 = std::abs(node2.Y() - node3.Y());
+        height = 0.5 * (height1 + height2);
+    }
+
+    length = 1.0;
+
     // Asymmetric matrix:
     // Nielsen, A. H. (2006, May). Absorbing boundary conditions for seismic analysis in ABAQUS. In ABAQUS users’ conference (pp. 359-376).
-    rLeftHandSideMatrix(0, 0) = IntegrationWeight * B(0, 0) * D(0, 0); // k00
-    rLeftHandSideMatrix(0, 6) = IntegrationWeight * B(0, 6) * D(0, 6); // k06
-    rLeftHandSideMatrix(1, 1) = IntegrationWeight * B(1, 1) * D(1, 1); // k11
-    rLeftHandSideMatrix(1, 7) = IntegrationWeight * B(1, 7) * D(1, 7); // k17
-    rLeftHandSideMatrix(2, 1) = IntegrationWeight * B(2, 1) * D(2, 1); // k21
-    rLeftHandSideMatrix(2, 7) = IntegrationWeight * B(2, 7) * D(2, 7); // k27
-    rLeftHandSideMatrix(3, 0) = IntegrationWeight * B(3, 0) * D(3, 0); // k30
-    rLeftHandSideMatrix(3, 6) = IntegrationWeight * B(3, 6) * D(3, 6); // k36
-    rLeftHandSideMatrix(4, 1) = IntegrationWeight * B(4, 1) * D(4, 1); // k41
-    rLeftHandSideMatrix(4, 7) = IntegrationWeight * B(4, 7) * D(4, 7); // k47
-    rLeftHandSideMatrix(5, 0) = IntegrationWeight * B(5, 0) * D(5, 0); // k50
-    rLeftHandSideMatrix(5, 6) = IntegrationWeight * B(5, 6) * D(5, 6); // k56
-    rLeftHandSideMatrix(6, 0) = IntegrationWeight * B(6, 0) * D(6, 0); // k60
-    rLeftHandSideMatrix(6, 6) = IntegrationWeight * B(6, 6) * D(6, 6); // k66
-    rLeftHandSideMatrix(7, 1) = IntegrationWeight * B(7, 1) * D(7, 1); // k71
-    rLeftHandSideMatrix(7, 7) = IntegrationWeight * B(7, 7) * D(7, 7); // k77
+    rLeftHandSideMatrix(0, 0) = length * mu / height; // k00
+    rLeftHandSideMatrix(0, 6) = -length * mu / height; // k06
+    rLeftHandSideMatrix(1, 1) = length * (lambda + 2.0 * mu) / height; // k11
+    rLeftHandSideMatrix(1, 7) = -length * (lambda + 2.0 * mu) / height; // k17
+    rLeftHandSideMatrix(2, 1) = 0.5 * n_dir * lambda; // k21
+    rLeftHandSideMatrix(2, 7) = -0.5 * n_dir * lambda; // k27
+    rLeftHandSideMatrix(3, 0) = 0.5 * n_dir * mu; // k30
+    rLeftHandSideMatrix(3, 6) = -0.5 * n_dir * mu; // k36
+    rLeftHandSideMatrix(4, 1) = 0.5 * n_dir * lambda; // k41
+    rLeftHandSideMatrix(4, 7) = -0.5 * n_dir * lambda; // k47
+    rLeftHandSideMatrix(5, 0) = 0.5 * n_dir * mu; // k50
+    rLeftHandSideMatrix(5, 6) = -0.5 * n_dir * mu; // k56
+    rLeftHandSideMatrix(6, 0) = -length * mu / height; // k60
+    rLeftHandSideMatrix(6, 6) = length * mu / height; // k66
+    rLeftHandSideMatrix(7, 1) = -length * (lambda + 2.0 * mu) / height; // k71
+    rLeftHandSideMatrix(7, 7) = length * (lambda + 2.0 * mu) / height; // k77
 }
 
 /***********************************************************************************/

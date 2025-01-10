@@ -548,6 +548,7 @@ void KratosStructuralMechanicsApplication::Register() {
     // Variables for the boundary conditions in seismic problems
     KRATOS_REGISTER_VARIABLE( WAVE_VELOCITY_P );
     KRATOS_REGISTER_VARIABLE( WAVE_VELOCITY_S );
+    KRATOS_REGISTER_VARIABLE( NORMAL_DIRECTION );
 
     // for DEM-FEM 2D
     KRATOS_REGISTER_VARIABLE(IMPOSED_Z_STRAIN_VALUE)
