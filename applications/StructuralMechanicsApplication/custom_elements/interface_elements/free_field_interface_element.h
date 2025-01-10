@@ -185,7 +185,7 @@ protected:
     {
     }
 
-     /**
+    /**
      * @brief This method returns if the element provides the strain
      */
     bool UseElementProvidedStrain() const override;

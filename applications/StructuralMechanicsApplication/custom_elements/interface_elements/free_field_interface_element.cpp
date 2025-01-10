@@ -135,29 +135,42 @@ void FreeFieldInterfaceElement::CalculateDampingMatrix(
     const SizeType dimension = r_geometry.WorkingSpaceDimension();
     const SizeType mat_size = number_of_nodes * dimension;
 
-    // Asegúrate de que la matriz de amortiguamiento tenga el tamaño correcto
+    // Initialize the damping matrix
     if (rDampingMatrix.size1() != mat_size || rDampingMatrix.size2() != mat_size)
         rDampingMatrix.resize(mat_size, mat_size, false);
 
     noalias(rDampingMatrix) = ZeroMatrix(mat_size, mat_size);
 
-    // Obtener las propiedades del elemento
-    const double density = GetProperties()[DENSITY];
-    const double cp = GetProperties()[WAVE_VELOCITY_P];
-    const double cs = GetProperties()[WAVE_VELOCITY_S];
+    // Get material properties
+    const double density = 2675.0;
+    const double cp = 4081.0;
+    const double cs = 2200.0;
 
-    // Calculate element length
-    const double length = r_geometry.Length();
+    // Calculate element height
+    double height = 0.0;
+    if (dimension == 2 && number_of_nodes == 4) {
+        // Assuming a quadrilateral element
+        const auto& node1 = r_geometry[0];
+        const auto& node2 = r_geometry[1];
+        const auto& node3 = r_geometry[2];
+        const auto& node4 = r_geometry[3];
 
-    // Calcular los términos específicos de la matriz de amortiguamiento
-    rDampingMatrix(2, 2) = 0.5 * length * density * cp; // c22
-    rDampingMatrix(4, 4) = 0.5 * length * density * cp; // c44
-    rDampingMatrix(2, 0) = -0.5 * length * density * cp; // c20
-    rDampingMatrix(4, 6) = -0.5 * length * density * cp; // c46
-    rDampingMatrix(3, 3) = 0.5 * length * density * cs; // c33
-    rDampingMatrix(5, 5) = 0.5 * length * density * cs; // c55
-    rDampingMatrix(3, 1) = -0.5 * length * density * cs; // c31
-    rDampingMatrix(4, 4) = -0.5 * length * density * cs; // c57
+        // Calculate the height as the average distance between opposite sides
+        double height1 = std::abs(node1.Y() - node3.Y());
+        double height2 = std::abs(node2.Y() - node4.Y());
+        height = 0.5 * (height1 + height2);
+    }
+
+    // Calculate damping matrix elements (Asymmetric matrix)
+    // Nielsen, A. H. (2006, May). Absorbing boundary conditions for seismic analysis in ABAQUS. In ABAQUS users’ conference (pp. 359-376).
+    rDampingMatrix(2, 2) = 0.5 * height * density * cp; // c22
+    rDampingMatrix(4, 4) = 0.5 * height * density * cp; // c44
+    rDampingMatrix(2, 0) = -0.5 * height * density * cp; // c20
+    rDampingMatrix(4, 6) = -0.5 * height * density * cp; // c46
+    rDampingMatrix(3, 3) = 0.5 * height * density * cs; // c33
+    rDampingMatrix(5, 5) = 0.5 * height * density * cs; // c55
+    rDampingMatrix(3, 1) = -0.5 * height * density * cs; // c31
+    rDampingMatrix(5, 7) = -0.5 * height * density * cs; // c57
 
     KRATOS_CATCH("")
 }
