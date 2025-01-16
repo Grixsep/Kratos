@@ -13,32 +13,31 @@
 // External includes
 
 // Project includes
-#include "includes/checks.h"
-#include "includes/properties.h"
 #include "custom_constitutive/free_field_constitutive_law.h"
 #include "structural_mechanics_application_variables.h"
+#include "custom_utilities/constitutive_law_utilities.h"
 
 namespace Kratos
 {
 
 //******************************CONSTRUCTOR*******************************************
-//************************************************************************************
+/***********************************************************************************/
 
 FreeFieldConstitutiveLaw::FreeFieldConstitutiveLaw()
-    : ConstitutiveLaw()
+    : ElasticIsotropic3D()
 {
 }
 
 //******************************COPY CONSTRUCTOR**************************************
-//************************************************************************************
+/***********************************************************************************/
 
 FreeFieldConstitutiveLaw::FreeFieldConstitutiveLaw(const FreeFieldConstitutiveLaw& rOther)
-    : ConstitutiveLaw(rOther)
+    : ElasticIsotropic3D(rOther)
 {
 }
 
 //********************************CLONE***********************************************
-//************************************************************************************
+/***********************************************************************************/
 
 ConstitutiveLaw::Pointer FreeFieldConstitutiveLaw::Clone() const
 {
@@ -46,143 +45,105 @@ ConstitutiveLaw::Pointer FreeFieldConstitutiveLaw::Clone() const
 }
 
 //*******************************DESTRUCTOR*******************************************
-//************************************************************************************
+/***********************************************************************************/
 
 FreeFieldConstitutiveLaw::~FreeFieldConstitutiveLaw()
 {
-    // TODO: Add if necessary
 }
 
-//*************************CONSTITUTIVE LAW GENERAL FEATURES *************************
-//************************************************************************************
+/***********************************************************************************/
+/***********************************************************************************/
 
-void FreeFieldConstitutiveLaw::GetLawFeatures(Features& rFeatures)
+bool& FreeFieldConstitutiveLaw::GetValue(const Variable<bool>& rThisVariable, bool& rValue)
 {
-    //Set the strain size
-    rFeatures.mStrainSize = 1;
-
-    //Set the spacedimension
-    rFeatures.mSpaceDimension = 3;
-}
-//************************************************************************************
-//************************************************************************************
-
-array_1d<double, 3 > & FreeFieldConstitutiveLaw::GetValue(
-    const Variable<array_1d<double, 3 > >& rThisVariable,
-    array_1d<double, 3 > & rValue)
-{
-    KRATOS_ERROR << "Can't get the specified value" << std::endl;
     return rValue;
 }
 
-//************************************************************************************
-//************************************************************************************
+/***********************************************************************************/
+/***********************************************************************************/
 
-double& FreeFieldConstitutiveLaw::CalculateValue(
-    ConstitutiveLaw::Parameters& rParameterValues,
-    const Variable<double>& rThisVariable,
-    double& rValue)
+Matrix& FreeFieldConstitutiveLaw::GetValue(const Variable<Matrix>& rThisVariable, Matrix& rValue)
 {
-    if(rThisVariable == TANGENT_MODULUS) rValue = rParameterValues.GetMaterialProperties()[YOUNG_MODULUS];
-    else if (rThisVariable == STRAIN_ENERGY){
-        Vector current_strain = ZeroVector(1);
-        rParameterValues.GetStrainVector(current_strain);
-        rValue = 0.50 * rParameterValues.GetMaterialProperties()[YOUNG_MODULUS] * current_strain[0] * current_strain[0];
-    }
-    else KRATOS_ERROR << "Can't calculate the specified value" << std::endl;
     return rValue;
 }
 
-//************************************************************************************
-//************************************************************************************
+/***********************************************************************************/
+/***********************************************************************************/
 
-Vector& FreeFieldConstitutiveLaw::CalculateValue(
-    ConstitutiveLaw::Parameters& rParameterValues,
-    const Variable<Vector>& rThisVariable,
-    Vector& rValue)
+Vector& FreeFieldConstitutiveLaw::GetValue(const Variable<Vector>& rThisVariable, Vector& rValue)
 {
-    if(rThisVariable == NORMAL_STRESS)
+    return rValue;
+}
+
+/***********************************************************************************/
+/***********************************************************************************/
+
+double& FreeFieldConstitutiveLaw::GetValue(const Variable<double>& rThisVariable, double& rValue)
     {
-        const double current_stress = this->CalculateStressElastic(rParameterValues);
-        constexpr SizeType dofs = 6;
-        rValue = ZeroVector(dofs);
-        rValue[0] = -1.0 * current_stress;
-        rValue[3] = 1.0 * current_stress;
-    }
-    else KRATOS_ERROR << "Can't calculate the specified value" << std::endl;
-    return rValue;
-}
-
-//************************************************************************************
-//************************************************************************************
-
-array_1d<double, 3 > & FreeFieldConstitutiveLaw::CalculateValue(
-    ConstitutiveLaw::Parameters& rParameterValues,
-    const Variable<array_1d<double, 3 > >& rVariable,
-	array_1d<double, 3 > & rValue)
-    {
-        if (rVariable == FORCE)
-        {
-            constexpr SizeType dimension = 3;
-            rValue = ZeroVector(dimension);
-            //rValue[0] = this->mStressState;
-            rValue[0] = this->CalculateStressElastic(rParameterValues);
-            rValue[1] = 0.0;
-            rValue[2] = 0.0;
-        }
-        else KRATOS_ERROR << "Can't calculate the specified value" << std::endl;
         return rValue;
     }
 
-//************************************************************************************
-//************************************************************************************
-void FreeFieldConstitutiveLaw::CalculateMaterialResponsePK2(Parameters& rValues)
+//*************************CONSTITUTIVE LAW GENERAL FEATURES *************************
+/***********************************************************************************/
+
+void FreeFieldConstitutiveLaw::GetLawFeatures(Features& rFeatures)
 {
-    AddInitialStrainVectorContribution(rValues.GetStrainVector());
-    Vector& stress_vector = rValues.GetStressVector();
-    if (stress_vector.size() != 1) stress_vector.resize(1, false);
-    stress_vector[0] = this->CalculateStressElastic(rValues);
-    AddInitialStressVectorContribution(stress_vector);
-}
-//************************************************************************************
-//************************************************************************************
+    //Set the type of law
+    rFeatures.mOptions.Set( PLANE_STRAIN_LAW );
+    rFeatures.mOptions.Set( INFINITESIMAL_STRAINS );
+    rFeatures.mOptions.Set( ISOTROPIC );
 
-double FreeFieldConstitutiveLaw::CalculateStressElastic(
-    ConstitutiveLaw::Parameters& rParameterValues)
-{
-    Vector current_strain = ZeroVector(1);
-    rParameterValues.GetStrainVector(current_strain);
-    double tangent_modulus(0.0);
-    CalculateValue(rParameterValues,TANGENT_MODULUS,tangent_modulus);
+    //Set strain measure required by the consitutive law
+    rFeatures.mStrainMeasures.push_back(StrainMeasure_Infinitesimal);
+    rFeatures.mStrainMeasures.push_back(StrainMeasure_Deformation_Gradient);
 
-    const double current_stress = tangent_modulus*current_strain[0];
+    //Set the strain size
+    rFeatures.mStrainSize = 3;
 
-    if (rParameterValues.GetOptions().Is(ConstitutiveLaw::COMPUTE_CONSTITUTIVE_TENSOR)) {
-        Matrix& r_const_matrix = rParameterValues.GetConstitutiveMatrix();
-        r_const_matrix.resize(1, 1);
-        r_const_matrix(0, 0) = tangent_modulus;
+    //Set the spacedimension
+    rFeatures.mSpaceDimension = 2;
     }
-    return current_stress;
+
+/***********************************************************************************/
+/***********************************************************************************/
+
+void FreeFieldConstitutiveLaw::CalculateElasticMatrix(VoigtSizeMatrixType& rC, ConstitutiveLaw::Parameters& rValues)
+{
+    const auto &r_props = rValues.GetMaterialProperties();
+    const double E = r_props[YOUNG_MODULUS];
+    const double NU = r_props[POISSON_RATIO];
+    ConstitutiveLawUtilities<3>::CalculateElasticMatrixPlaneStrain(rC, E, NU);
 }
 
-//************************************************************************************
-//************************************************************************************
+/***********************************************************************************/
+/***********************************************************************************/
 
-int FreeFieldConstitutiveLaw::Check(
-    const Properties& rMaterialProperties,
-    const GeometryType& rElementGeometry,
-    const ProcessInfo& rCurrentProcessInfo
-) const
+void FreeFieldConstitutiveLaw::CalculatePK2Stress(
+    const ConstitutiveLaw::StrainVectorType& rStrainVector,
+    ConstitutiveLaw::StressVectorType& rStressVector,
+    ConstitutiveLaw::Parameters& rValues
+    )
 {
-    KRATOS_CHECK(rMaterialProperties.Has(YOUNG_MODULUS));
-    KRATOS_ERROR_IF(YOUNG_MODULUS.Key() == 0 || rMaterialProperties[YOUNG_MODULUS] <= 0.00)
-     << "YOUNG_MODULUS has Key zero or invalid value " << std::endl;
+    const Properties& r_material_properties = rValues.GetMaterialProperties();
+    const double E = r_material_properties[YOUNG_MODULUS];
+    const double NU = r_material_properties[POISSON_RATIO];
 
-    KRATOS_ERROR_IF(DENSITY.Key() == 0 || rMaterialProperties[DENSITY] < 0.00)
-     << "DENSITY has Key zero or invalid value " << std::endl;
+    const double c0 = E / ((1.0 + NU)*(1.0 - 2.0 * NU));
+    const double c1 = (1.0 - NU)*c0;
+    const double c2 = c0 * NU;
+    const double c3 = (0.5 - NU)*c0;
 
-    return 0;
+    rStressVector[0] = c1 * rStrainVector[0] + c2 * rStrainVector[1];
+    rStressVector[1] = c2 * rStrainVector[0] + c1 * rStrainVector[1];
+    rStressVector[2] = c3 * rStrainVector[2];
+}
 
+/***********************************************************************************/
+/***********************************************************************************/
+
+void FreeFieldConstitutiveLaw::CalculateCauchyGreenStrain(Parameters& rValues, ConstitutiveLaw::StrainVectorType& rStrainVector)
+{
+    ConstitutiveLawUtilities<3>::CalculateCauchyGreenStrain(rValues, rStrainVector);
 }
 
 } // Namespace Kratos
