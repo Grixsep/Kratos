@@ -120,11 +120,47 @@ void FreeFieldInterfaceElement::CalculateMassMatrix(
     // Checking density
     KRATOS_ERROR_IF_NOT(r_prop.Has(DENSITY)) << "DENSITY has to be provided for the calculation of the MassMatrix!" << std::endl;
 
-    VectorType temp_vector(mat_size);
-    this->CalculateLumpedMassVector(temp_vector, rCurrentProcessInfo);
+    const double density = StructuralMechanicsElementUtilities::GetDensityForMassMatrixComputation(*this);
+    const double thickness = (dimension == 2 && r_prop.Has(THICKNESS)) ? r_prop[THICKNESS] : 1.0;
+
+    // Calcular el área del cuadrilátero
+    double area = 0.0;
+    if (dimension == 2 && number_of_nodes == 4) {
+        const auto& node1 = r_geom[0];
+        const auto& node2 = r_geom[1];
+        const auto& node3 = r_geom[2];
+        const auto& node4 = r_geom[3];
+
+        // Coordenadas de los nodos
+        const double x1 = node1.X();
+        const double y1 = node1.Y();
+        const double x2 = node2.X();
+        const double y2 = node2.Y();
+        const double x3 = node3.X();
+        const double y3 = node3.Y();
+        const double x4 = node4.X();
+        const double y4 = node4.Y();
+
+        // Área del primer triángulo (nodos 1, 2, 3)
+        double area1 = 0.5 * std::abs(x1 * (y2 - y3) + x2 * (y3 - y1) + x3 * (y1 - y2));
+
+        // Área del segundo triángulo (nodos 1, 3, 4)
+        double area2 = 0.5 * std::abs(x1 * (y3 - y4) + x3 * (y4 - y1) + x4 * (y1 - y3));
+
+        // Área total del cuadrilátero
+        area = area1 + area2;
+    }
+
+    // Total mass of the element
+    const double element_mass = area * density * thickness;
+
+    // Distribuir la masa total entre los nodos del elemento
+    const double lumped_mass = element_mass / (number_of_nodes / 2);
+
+    // TODO: This is for quadrilateral in 2D, it should be improved for 3D
     for (IndexType i = 0; i < mat_size; ++i)
     {
-        rMassMatrix(i, i) = temp_vector[i];
+        if (i >= 2 && i <= 5) rMassMatrix(i, i) = lumped_mass;
     }
 
     KRATOS_CATCH("");
@@ -141,6 +177,7 @@ void FreeFieldInterfaceElement::CalculateDampingMatrix(
     KRATOS_TRY
 
     const auto& r_geometry = GetGeometry();
+    const auto& r_prop = GetProperties();
     const SizeType number_of_nodes = r_geometry.size();
     const SizeType dimension = r_geometry.WorkingSpaceDimension();
     const SizeType mat_size = number_of_nodes * dimension;
@@ -155,6 +192,8 @@ void FreeFieldInterfaceElement::CalculateDampingMatrix(
     double density = this->GetValue(DENSITY);
     double wave_velocity_p = this->GetValue(WAVE_VELOCITY_P);
     double wave_velocity_s = this->GetValue(WAVE_VELOCITY_S);
+
+    const double thickness = (dimension == 2 && r_prop.Has(THICKNESS)) ? r_prop[THICKNESS] : 1.0;
 
     // Calculate element height
     double height = 0.0;
@@ -173,14 +212,14 @@ void FreeFieldInterfaceElement::CalculateDampingMatrix(
 
     // Calculate damping matrix elements (Asymmetric matrix)
     // Nielsen, A. H. (2006, May). Absorbing boundary conditions for seismic analysis in ABAQUS. In ABAQUS users’ conference (pp. 359-376).
-    rDampingMatrix(6, 6) += 0.5 * height * density * wave_velocity_p; // c33
-    rDampingMatrix(0, 0) += 0.5 * height * density * wave_velocity_p; // c55
-    rDampingMatrix(6, 4) -= 0.5 * height * density * wave_velocity_p; // c31
-    rDampingMatrix(0, 2) -= 0.5 * height * density * wave_velocity_p; // c57
-    rDampingMatrix(7, 7) += 0.5 * height * density * wave_velocity_s; // c44
-    rDampingMatrix(1, 1) += 0.5 * height * density * wave_velocity_s; // c66
-    rDampingMatrix(7, 5) -= 0.5 * height * density * wave_velocity_s; // c42
-    rDampingMatrix(1, 3) -= 0.5 * height * density * wave_velocity_s; // c68
+    rDampingMatrix(6, 6) += 0.5 * thickness * height * density * wave_velocity_p; // c33
+    rDampingMatrix(0, 0) += 0.5 * thickness * height * density * wave_velocity_p; // c55
+    rDampingMatrix(6, 4) -= 0.5 * thickness * height * density * wave_velocity_p; // c31
+    rDampingMatrix(0, 2) -= 0.5 * thickness * height * density * wave_velocity_p; // c57
+    rDampingMatrix(7, 7) += 0.5 * thickness * height * density * wave_velocity_s; // c44
+    rDampingMatrix(1, 1) += 0.5 * thickness * height * density * wave_velocity_s; // c66
+    rDampingMatrix(7, 5) -= 0.5 * thickness * height * density * wave_velocity_s; // c42
+    rDampingMatrix(1, 3) -= 0.5 * thickness * height * density * wave_velocity_s; // c68
 
     KRATOS_CATCH("")
 }
@@ -272,20 +311,6 @@ void FreeFieldInterfaceElement::CalculateAll(
         if ( CalculateResidualVectorFlag ) { // Calculation of the matrix is required
             this->CalculateAndAddResidualVector(rRightHandSideVector, this_kinematic_variables, rCurrentProcessInfo, body_force, this_constitutive_variables.StressVector, int_to_reference_weight);
         }
-
-        // Obtain velocities
-        Vector velocities(mat_size);
-        this->GetFirstDerivativesVector(velocities);
-
-        // Initialize damping matrix
-        Matrix damping_matrix(mat_size, mat_size);
-        noalias(damping_matrix) = ZeroMatrix(mat_size, mat_size);
-
-        // Calculate damping matrix
-        this->CalculateDampingMatrix(damping_matrix, rCurrentProcessInfo);
-
-        // Calculate residual vector
-        noalias(rRightHandSideVector) -= prod(damping_matrix, velocities);
     }
 
     KRATOS_CATCH( "" )
@@ -430,51 +455,6 @@ void FreeFieldInterfaceElement::CalculateAndAddKm(
     rLeftHandSideMatrix(1, 4) += 0.5 * n_dir * mu; // k61
     rLeftHandSideMatrix(7, 2) -= 0.5 * n_dir * mu; // k47
     rLeftHandSideMatrix(1, 2) -= 0.5 * n_dir * mu; // k67
-}
-
-/***********************************************************************************/
-/***********************************************************************************/
-
-void FreeFieldInterfaceElement::CalculateLumpedMassVector(
-    VectorType& rLumpedMassVector,
-    const ProcessInfo& rCurrentProcessInfo
-    ) const
-{
-    KRATOS_TRY;
-
-    KRATOS_ERROR_IF_NOT(UseGeometryIntegrationMethod()) << "CalculateLumpedMassVector not implemented for element-based integration in base class" << std::endl;
-
-    const auto& r_geom = GetGeometry();
-    const auto& r_prop = GetProperties();
-    const SizeType dimension = r_geom.WorkingSpaceDimension();
-    const SizeType number_of_nodes = r_geom.size();
-    const SizeType mat_size = dimension * number_of_nodes;
-
-    // Clear matrix
-    if (rLumpedMassVector.size() != mat_size)
-        rLumpedMassVector.resize( mat_size, false );
-
-    const double density = StructuralMechanicsElementUtilities::GetDensityForMassMatrixComputation(*this);
-    const double thickness = (dimension == 2 && r_prop.Has(THICKNESS)) ? r_prop[THICKNESS] : 1.0;
-
-    // LUMPED MASS MATRIX
-    const double total_mass = GetGeometry().DomainSize() * density * thickness;
-
-    Vector lumping_factors;
-    lumping_factors = GetGeometry().LumpingFactors( lumping_factors );
-
-    for ( IndexType i = 0; i < number_of_nodes; ++i ) {
-        double temp = 0.0;
-        if (i == 1 || i == 2) {
-            temp = lumping_factors[i] * total_mass;
-        }
-        for ( IndexType j = 0; j < dimension; ++j ) {
-            IndexType index = i * dimension + j;
-            rLumpedMassVector[index] = temp;
-        }
-    }
-
-    KRATOS_CATCH("");
 }
 
 /***********************************************************************************/
