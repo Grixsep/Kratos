@@ -105,48 +105,26 @@ void FreeFieldInterfaceElement::CalculateMassMatrix(
 {
     KRATOS_TRY;
 
-    const auto& r_geometry = GetGeometry();
-    const SizeType number_of_nodes = r_geometry.size();
-    const SizeType dimension = r_geometry.WorkingSpaceDimension();
-    const SizeType mat_size = number_of_nodes * dimension;
+    const auto& r_prop = GetProperties();
 
-    // Asegúrate de que la matriz de masa tenga el tamaño correcto
+    const auto& r_geom = GetGeometry();
+    SizeType dimension = r_geom.WorkingSpaceDimension();
+    SizeType number_of_nodes = r_geom.size();
+    SizeType mat_size = dimension * number_of_nodes;
+
+    // Clear matrix
     if (rMassMatrix.size1() != mat_size || rMassMatrix.size2() != mat_size)
-        rMassMatrix.resize(mat_size, mat_size, false);
+        rMassMatrix.resize( mat_size, mat_size, false );
+    noalias(rMassMatrix) = ZeroMatrix( mat_size, mat_size );
 
-    noalias(rMassMatrix) = ZeroMatrix(mat_size, mat_size);
+    // Checking density
+    KRATOS_ERROR_IF_NOT(r_prop.Has(DENSITY)) << "DENSITY has to be provided for the calculation of the MassMatrix!" << std::endl;
 
-    // Obtener las propiedades del material
-    const double density = GetProperties()[DENSITY];
-
-    // Calculate element height
-    double height = 0.0;
-    if (dimension == 2 && number_of_nodes == 4) {
-        // Assuming a quadrilateral element
-        const auto& node1 = r_geometry[0];
-        const auto& node2 = r_geometry[1];
-        const auto& node3 = r_geometry[2];
-        const auto& node4 = r_geometry[3];
-
-        // Calculate the height as the average distance between opposite sides
-        double height1 = std::abs(node1.Y() - node4.Y());
-        double height2 = std::abs(node2.Y() - node3.Y());
-        height = 0.5 * (height1 + height2);
-    }
-
-    // Calcular la masa total del elemento
-    const double total_mass = density * height;
-
-    // Ensamblar la matriz de masa concentrada
-    for (SizeType i = 0; i < number_of_nodes; ++i) {
-        for (SizeType j = 0; j < dimension; ++j) {
-            const SizeType index = i * dimension + j;
-            if (index >= 2 && index <= 5) {
-                rMassMatrix(index, index) = 0.5 * total_mass;
-            } else {
-                rMassMatrix(index, index) = 0.0;
-            }
-        }
+    VectorType temp_vector(mat_size);
+    this->CalculateLumpedMassVector(temp_vector, rCurrentProcessInfo);
+    for (IndexType i = 0; i < mat_size; ++i)
+    {
+        rMassMatrix(i, i) = temp_vector[i];
     }
 
     KRATOS_CATCH("");
@@ -167,11 +145,11 @@ void FreeFieldInterfaceElement::CalculateDampingMatrix(
     const SizeType dimension = r_geometry.WorkingSpaceDimension();
     const SizeType mat_size = number_of_nodes * dimension;
 
-    // Initialize the damping matrix
-    if (rDampingMatrix.size1() != mat_size || rDampingMatrix.size2() != mat_size)
-        rDampingMatrix.resize(mat_size, mat_size, false);
-
-    noalias(rDampingMatrix) = ZeroMatrix(mat_size, mat_size);
+    StructuralMechanicsElementUtilities::CalculateRayleighDampingMatrix(
+        *this,
+        rDampingMatrix,
+        rCurrentProcessInfo,
+        mat_size);
 
     // Get material properties
     double density = this->GetValue(DENSITY);
@@ -291,11 +269,13 @@ void FreeFieldInterfaceElement::CalculateAll(
             this->CalculateAndAddKm( rLeftHandSideMatrix, this_kinematic_variables.B, this_constitutive_variables.D, int_to_reference_weight );
         }
 
-        // Obtain velocities and displacements
+        if ( CalculateResidualVectorFlag ) { // Calculation of the matrix is required
+            this->CalculateAndAddResidualVector(rRightHandSideVector, this_kinematic_variables, rCurrentProcessInfo, body_force, this_constitutive_variables.StressVector, int_to_reference_weight);
+        }
+
+        // Obtain velocities
         Vector velocities(mat_size);
-        Vector displacements(mat_size);
         this->GetFirstDerivativesVector(velocities);
-        this->GetValuesVector(displacements);
 
         // Initialize damping matrix
         Matrix damping_matrix(mat_size, mat_size);
@@ -306,7 +286,6 @@ void FreeFieldInterfaceElement::CalculateAll(
 
         // Calculate residual vector
         noalias(rRightHandSideVector) -= prod(damping_matrix, velocities);
-        noalias(rRightHandSideVector) -= prod(rLeftHandSideMatrix, displacements);
     }
 
     KRATOS_CATCH( "" )
@@ -389,6 +368,23 @@ void FreeFieldInterfaceElement::CalculateB(
 
     StructuralMechanicsElementUtilities::CalculateB(*this, rDN_DX, rB);
 
+    rB(0, 0) = 0.0;
+    rB(0, 1) = 0.0;
+    rB(0, 2) = 0.0;
+    rB(0, 3) = 0.0;
+    rB(0, 4) = 0.0;
+    rB(0, 5) = 0.0;
+    rB(0, 6) = 0.0;
+    rB(0, 7) = 0.0;
+    rB(1, 2) = 0.0;
+    rB(1, 4) = 0.0;
+    rB(2, 0) = 0.0;
+    rB(2, 1) = 0.0;
+    rB(2, 3) = 0.0;
+    rB(2, 5) = 0.0;
+    rB(2, 6) = 0.0;
+    rB(2, 7) = 0.0;
+
     KRATOS_CATCH( "" )
 }
 
@@ -413,16 +409,7 @@ void FreeFieldInterfaceElement::CalculateAndAddKm(
     const double IntegrationWeight
     ) const
 {
-    const auto& r_geometry = GetGeometry();
-    const SizeType number_of_nodes = r_geometry.size();
-    const SizeType dimension = r_geometry.WorkingSpaceDimension();
-    const SizeType mat_size = number_of_nodes * dimension;
-
-    // Asegúrate de que la matriz de rigidez tenga el tamaño correcto
-    if (rLeftHandSideMatrix.size1() != mat_size || rLeftHandSideMatrix.size2() != mat_size)
-        rLeftHandSideMatrix.resize(mat_size, mat_size, false);
-
-    noalias(rLeftHandSideMatrix) = ZeroMatrix(mat_size, mat_size);
+    noalias( rLeftHandSideMatrix ) += IntegrationWeight * prod( trans( B ), Matrix(prod(D, B)));
 
     // Get material properties
     double n_dir = this->GetValue(NORMAL_DIRECTION);
@@ -432,39 +419,62 @@ void FreeFieldInterfaceElement::CalculateAndAddKm(
     const double lambda = young * poisson / ((1.0 + poisson) * (1.0 - 2.0 * poisson));
     const double mu = young / (2.0 * (1.0 + poisson));
 
-    // Calculate element height
-    double height = 0.0;
-    if (dimension == 2 && number_of_nodes == 4) {
-        // Assuming a quadrilateral element
-        const auto& node1 = r_geometry[0];
-        const auto& node2 = r_geometry[1];
-        const auto& node3 = r_geometry[2];
-        const auto& node4 = r_geometry[3];
-
-        // Calculate the height as the average distance between opposite sides
-        double height1 = std::abs(node1.Y() - node4.Y());
-        double height2 = std::abs(node2.Y() - node3.Y());
-        height = 0.5 * (height1 + height2);
-    }
-
     // Asymmetric matrix:
     // Nielsen, A. H. (2006, May). Absorbing boundary conditions for seismic analysis in ABAQUS. In ABAQUS users’ conference (pp. 359-376).
-    rLeftHandSideMatrix(4, 4) += mu / height; // k11
-    rLeftHandSideMatrix(2, 2) += mu / height; // k77
-    rLeftHandSideMatrix(4, 2) -= mu / height; // k17
-    rLeftHandSideMatrix(2, 4) -= mu / height; // k71
-    rLeftHandSideMatrix(5, 5) += (lambda + 2.0 * mu) / height; // k22
-    rLeftHandSideMatrix(3, 3) += (lambda + 2.0 * mu) / height; // k88
-    rLeftHandSideMatrix(5, 3) -= (lambda + 2.0 * mu) / height; // k28
-    rLeftHandSideMatrix(3, 5) -= (lambda + 2.0 * mu) / height; // k82
     rLeftHandSideMatrix(6, 5) += 0.5 * n_dir * lambda; // k32
     rLeftHandSideMatrix(0, 5) += 0.5 * n_dir * lambda; // k52
     rLeftHandSideMatrix(6, 3) -= 0.5 * n_dir * lambda; // k38
     rLeftHandSideMatrix(0, 3) -= 0.5 * n_dir * lambda; // k58
+
     rLeftHandSideMatrix(7, 4) += 0.5 * n_dir * mu; // k41
     rLeftHandSideMatrix(1, 4) += 0.5 * n_dir * mu; // k61
     rLeftHandSideMatrix(7, 2) -= 0.5 * n_dir * mu; // k47
     rLeftHandSideMatrix(1, 2) -= 0.5 * n_dir * mu; // k67
+}
+
+/***********************************************************************************/
+/***********************************************************************************/
+
+void FreeFieldInterfaceElement::CalculateLumpedMassVector(
+    VectorType& rLumpedMassVector,
+    const ProcessInfo& rCurrentProcessInfo
+    ) const
+{
+    KRATOS_TRY;
+
+    KRATOS_ERROR_IF_NOT(UseGeometryIntegrationMethod()) << "CalculateLumpedMassVector not implemented for element-based integration in base class" << std::endl;
+
+    const auto& r_geom = GetGeometry();
+    const auto& r_prop = GetProperties();
+    const SizeType dimension = r_geom.WorkingSpaceDimension();
+    const SizeType number_of_nodes = r_geom.size();
+    const SizeType mat_size = dimension * number_of_nodes;
+
+    // Clear matrix
+    if (rLumpedMassVector.size() != mat_size)
+        rLumpedMassVector.resize( mat_size, false );
+
+    const double density = StructuralMechanicsElementUtilities::GetDensityForMassMatrixComputation(*this);
+    const double thickness = (dimension == 2 && r_prop.Has(THICKNESS)) ? r_prop[THICKNESS] : 1.0;
+
+    // LUMPED MASS MATRIX
+    const double total_mass = GetGeometry().DomainSize() * density * thickness;
+
+    Vector lumping_factors;
+    lumping_factors = GetGeometry().LumpingFactors( lumping_factors );
+
+    for ( IndexType i = 0; i < number_of_nodes; ++i ) {
+        double temp = 0.0;
+        if (i == 1 || i == 2) {
+            temp = lumping_factors[i] * total_mass;
+        }
+        for ( IndexType j = 0; j < dimension; ++j ) {
+            IndexType index = i * dimension + j;
+            rLumpedMassVector[index] = temp;
+        }
+    }
+
+    KRATOS_CATCH("");
 }
 
 /***********************************************************************************/

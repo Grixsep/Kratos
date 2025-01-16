@@ -291,6 +291,16 @@ protected:
         const double IntegrationWeight
         ) const override;
 
+    /**
+     * @brief Calculation of the lumped mass vector
+     * @param rLumpedMassVector The lumped mass vector
+     * @param rCurrentProcessInfo The current process info instance
+     */
+    void CalculateLumpedMassVector(
+        VectorType& rLumpedMassVector,
+        const ProcessInfo& rCurrentProcessInfo
+        ) const override;
+
     ///@}
     ///@name Protected Operations
     ///@{

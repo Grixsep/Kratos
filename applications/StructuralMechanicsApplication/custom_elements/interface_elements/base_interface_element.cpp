@@ -1988,7 +1988,7 @@ const Parameters BaseInterfaceElement::GetSpecifications() const
         "time_integration"           : ["static","implicit","explicit"],
         "framework"                  : "lagrangian",
         "symmetric_lhs"              : false,
-        "positive_definite_lhs"      : false,
+        "positive_definite_lhs"      : true,
         "output"                     : {
             "gauss_point"            : ["INTEGRATION_WEIGHT","STRAIN_ENERGY","ERROR_INTEGRATION_POINT","VON_MISES_STRESS","INSITU_STRESS","CAUCHY_STRESS_VECTOR","PK2_STRESS_VECTOR","GREEN_LAGRANGE_STRAIN_VECTOR","ALMANSI_STRAIN_VECTOR","CAUCHY_STRESS_TENSOR","PK2_STRESS_TENSOR","GREEN_LAGRANGE_STRAIN_TENSOR","ALMANSI_STRAIN_TENSOR","CONSTITUTIVE_MATRIX","DEFORMATION_GRADIENT","CONSTITUTIVE_LAW"],
             "nodal_historical"       : ["DISPLACEMENT","VELOCITY","ACCELERATION"],
