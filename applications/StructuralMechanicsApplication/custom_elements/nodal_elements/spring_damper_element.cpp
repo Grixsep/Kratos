@@ -114,12 +114,12 @@ void SpringDamperElement<TDim>::GetDofList( DofsVectorType& rElementalDofList, c
     {
         rElementalDofList.resize(msElementSize);
     }
-    
+
 
     for ( SizeType i = 0; i < msNumNodes; ++i ) {
         const SizeType index = i * msLocalSize;
         if constexpr (TDim == 2){
-            
+
             rElementalDofList[index] = GetGeometry()[i].pGetDof(DISPLACEMENT_X);
             rElementalDofList[index + 1] = GetGeometry()[i].pGetDof(DISPLACEMENT_Y);
             rElementalDofList[index + 2] = GetGeometry()[i].pGetDof(ROTATION_Z);
@@ -377,12 +377,42 @@ void SpringDamperElement<TDim>::ConstCalculateDampingMatrix(MatrixType& rDamping
             }
         }
 
-        for (std::size_t i = 0; i < msLocalSize; ++i) {
-            rDampingMatrix(i, i) += elemental_damping_ratio[i];
-            rDampingMatrix(i + msLocalSize, i + msLocalSize) += elemental_damping_ratio[i];
-            rDampingMatrix(i, i + msLocalSize) -= elemental_damping_ratio[i];
-            rDampingMatrix(i + msLocalSize, i) -= elemental_damping_ratio[i];
-        }
+        rDampingMatrix(0, 0) += elemental_damping_ratio[0];
+        rDampingMatrix(0, 1) -= 0.0;
+        rDampingMatrix(0, 2) -= 0.0;
+        rDampingMatrix(0, 3) -= elemental_damping_ratio[0];
+        rDampingMatrix(0, 4) -= 0.0;
+        rDampingMatrix(0, 5) -= 0.0;
+        rDampingMatrix(1, 0) -= 0.0;
+        rDampingMatrix(1, 1) += elemental_damping_ratio[1];
+        rDampingMatrix(1, 2) -= 0.0;
+        rDampingMatrix(1, 3) -= 0.0:
+        rDampingMatrix(1, 4) -= elemental_damping_ratio[1];
+        rDampingMatrix(1, 5) -= 0.0;
+        rDampingMatrix(2, 0) -= 0.0;
+        rDampingMatrix(2, 1) -= 0.0;
+        rDampingMatrix(2, 2) += elemental_damping_ratio[2];
+        rDampingMatrix(2, 3) -= 0.0;
+        rDampingMatrix(2, 4) -= 0.0;
+        rDampingMatrix(2, 5) -= elemental_damping_ratio[2];
+        rDampingMatrix(3, 0) -= 0.0;
+        rDampingMatrix(3, 1) -= 0.0;
+        rDampingMatrix(3, 2) -= 0.0;
+        rDampingMatrix(3, 3) += 0.0;
+        rDampingMatrix(3, 4) -= 0.0;
+        rDampingMatrix(3, 5) -= 0.0;
+        rDampingMatrix(4, 0) -= 0.0;
+        rDampingMatrix(4, 1) -= 0.0;
+        rDampingMatrix(4, 2) -= 0.0;
+        rDampingMatrix(4, 3) -= 0.0;
+        rDampingMatrix(4, 4) += 0.0;
+        rDampingMatrix(4, 5) -= 0.0;
+        rDampingMatrix(5, 0) -= 0.0;
+        rDampingMatrix(5, 1) -= 0.0;
+        rDampingMatrix(5, 2) -= 0.0;
+        rDampingMatrix(5, 3) -= 0.0;
+        rDampingMatrix(5, 4) -= 0.0;
+        rDampingMatrix(5, 5) += 0.0;
     }
 
     KRATOS_CATCH("");
@@ -520,6 +550,7 @@ void SpringDamperElement<TDim>::ConstCalculateRightHandSide(VectorType& rRightHa
     for (std::size_t i = 0; i < msElementSize; ++i) {
         rRightHandSideVector[i] -= elemental_stiffness[i % msLocalSize] * current_displacement[i];
     }
+
     KRATOS_CATCH("");
 }
 

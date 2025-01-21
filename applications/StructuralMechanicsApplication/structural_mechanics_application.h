@@ -537,6 +537,8 @@ private:
     const UserProvidedLinearElasticLaw<2> mUserProvidedLinearElastic2DLaw;
     const UserProvidedLinearElasticLaw<3> mUserProvidedLinearElastic3DLaw;
     const TimoshenkoBeamElasticConstitutiveLaw mTimoshenkoBeamElasticConstitutiveLaw;
+    const TimoshenkoBeamPlaneStrainElasticConstitutiveLaw mTimoshenkoBeamPlaneStrainElasticConstitutiveLaw;
+    const FreeFieldConstitutiveLaw mFreeFieldConstitutiveLaw;
 
     ///@}
     ///@name Private Operators

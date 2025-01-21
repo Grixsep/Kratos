@@ -211,6 +211,16 @@ protected:
         ) override;
 
     /**
+     * @brief This functions calculates the Damping Matrix
+     * @param damping_matrix The Damping Matrix
+     * @param rCurrentProcessInfo The current process info instance
+     */
+    void CalculateFreeFieldDampingMatrix(
+        MatrixType& damping_matrix,
+        const ProcessInfo& rCurrentProcessInfo
+        );
+
+    /**
      * @brief This functions calculates both the RHS and the LHS
      * @param rLeftHandSideMatrix The LHS
      * @param rRightHandSideVector The RHS
@@ -290,6 +300,18 @@ protected:
         const Matrix& D,
         const double IntegrationWeight
         ) const override;
+
+    /**
+     * @brief Calculation of the stiffness matrix
+     * @param rLeftHandSideMatrix The local LHS of the element
+     * @param B The deformation matrix
+     * @param D The constitutive matrix
+     * @param IntegrationWeight The integration weight of the corresponding Gauss point
+     */
+    void CalculateFreeFieldStiffnessMatrix(
+        MatrixType& stiffness_matrix,
+        const ProcessInfo& rCurrentProcessInfo
+        ) const;
 
     ///@}
     ///@name Protected Operations
