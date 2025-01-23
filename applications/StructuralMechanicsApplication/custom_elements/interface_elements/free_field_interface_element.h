@@ -211,16 +211,6 @@ protected:
         ) override;
 
     /**
-     * @brief This functions calculates the Damping Matrix
-     * @param damping_matrix The Damping Matrix
-     * @param rCurrentProcessInfo The current process info instance
-     */
-    void CalculateFreeFieldDampingMatrix(
-        MatrixType& damping_matrix,
-        const ProcessInfo& rCurrentProcessInfo
-        );
-
-    /**
      * @brief This functions calculates both the RHS and the LHS
      * @param rLeftHandSideMatrix The LHS
      * @param rRightHandSideVector The RHS

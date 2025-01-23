@@ -16,6 +16,7 @@
 
 // Project includes
 #include "utilities/math_utils.h"
+#include "utilities/geometry_utilities.h"
 
 // Application includes
 #include "free_field_interface_element.h"
@@ -123,7 +124,7 @@ void FreeFieldInterfaceElement::CalculateMassMatrix(
     const double density = StructuralMechanicsElementUtilities::GetDensityForMassMatrixComputation(*this);
     const double thickness = (dimension == 2 && r_prop.Has(THICKNESS)) ? r_prop[THICKNESS] : 1.0;
 
-    // Calcular el área del cuadrilátero
+    // Calculate the area of the quadrilateral (assuming it is a quadrilateral)
     double area = 0.0;
     if (dimension == 2 && number_of_nodes == 4) {
         const auto& node1 = r_geom[0];
@@ -131,36 +132,42 @@ void FreeFieldInterfaceElement::CalculateMassMatrix(
         const auto& node3 = r_geom[2];
         const auto& node4 = r_geom[3];
 
-        // Coordenadas de los nodos
-        const double x1 = node1.X();
-        const double y1 = node1.Y();
-        const double x2 = node2.X();
-        const double y2 = node2.Y();
-        const double x3 = node3.X();
-        const double y3 = node3.Y();
-        const double x4 = node4.X();
-        const double y4 = node4.Y();
+        // Node coordinates
+        const double x1 = node1.X0();
+        const double y1 = node1.Y0();
+        const double x2 = node2.X0();
+        const double y2 = node2.Y0();
+        const double x3 = node3.X0();
+        const double y3 = node3.Y0();
+        const double x4 = node4.X0();
+        const double y4 = node4.Y0();
 
-        // Área del primer triángulo (nodos 1, 2, 3)
+        // Area of the first triangle (nodes 1, 2, 3)
         double area1 = 0.5 * std::abs(x1 * (y2 - y3) + x2 * (y3 - y1) + x3 * (y1 - y2));
 
-        // Área del segundo triángulo (nodos 1, 3, 4)
+        // Area of the second triangle (nodes 1, 3, 4)
         double area2 = 0.5 * std::abs(x1 * (y3 - y4) + x3 * (y4 - y1) + x4 * (y1 - y3));
 
-        // Área total del cuadrilátero
+        // Total area of the quadrilateral
         area = area1 + area2;
     }
 
     // Total mass of the element
     const double element_mass = area * density * thickness;
 
-    // Distribuir la masa total entre los nodos del elemento
-    const double lumped_mass = element_mass / (0.5 * number_of_nodes);
+    // Distribute the total mass among the nodes of the element
+    const double lumped_mass = element_mass;
 
-    // TODO: This is for quadrilateral in 2D, it should be improved for 3D
-    for (IndexType i = 0; i < mat_size; ++i)
-    {
-        if (i >= 2 && i <= 5) rMassMatrix(i, i) = lumped_mass;
+    // Assemble the lumped mass matrix
+    for (IndexType i = 0; i < number_of_nodes; ++i) {
+        for (SizeType j = 0; j < dimension; ++j) {
+            const SizeType index = i * dimension + j;
+            if (index == 2 || index == 3 || index == 4 || index == 5) {
+                rMassMatrix(index, index) = lumped_mass;
+            } else {
+                rMassMatrix(index, index) = 0.0;
+            }
+        }
     }
 
     KRATOS_CATCH("");
@@ -176,6 +183,7 @@ void FreeFieldInterfaceElement::CalculateDampingMatrix(
 {
     KRATOS_TRY
 
+    const auto& r_geom = GetGeometry();
     unsigned int number_of_nodes = GetGeometry().size();
     unsigned int dimension = GetGeometry().WorkingSpaceDimension();
 
@@ -187,34 +195,50 @@ void FreeFieldInterfaceElement::CalculateDampingMatrix(
 
     Kratos::noalias( rDampingMatrix ) = ZeroMatrix( mat_size, mat_size );
 
-    KRATOS_CATCH("")
-}
-
-/***********************************************************************************/
-/***********************************************************************************/
-
-void FreeFieldInterfaceElement::CalculateFreeFieldDampingMatrix(
-    MatrixType& damping_matrix,
-    const ProcessInfo& rCurrentProcessInfo
-    )
-{
-    KRATOS_TRY
     // Get material properties
     double density = this->GetValue(DENSITY);
     double wave_velocity_p = this->GetValue(WAVE_VELOCITY_P);
     double wave_velocity_s = this->GetValue(WAVE_VELOCITY_S);
 
+    // Calculate the area of the quadrilateral (assuming it is a quadrilateral)
+    double area = 0.0;
+    if (dimension == 2 && number_of_nodes == 4) {
+        const auto& node1 = r_geom[0];
+        const auto& node2 = r_geom[1];
+        const auto& node3 = r_geom[2];
+        const auto& node4 = r_geom[3];
+
+        // Node coordinates
+        const double x1 = node1.X0();
+        const double y1 = node1.Y0();
+        const double x2 = node2.X0();
+        const double y2 = node2.Y0();
+        const double x3 = node3.X0();
+        const double y3 = node3.Y0();
+        const double x4 = node4.X0();
+        const double y4 = node4.Y0();
+
+        // Area of the first triangle (nodes 1, 2, 3)
+        double area1 = 0.5 * std::abs(x1 * (y2 - y3) + x2 * (y3 - y1) + x3 * (y1 - y2));
+
+        // Area of the second triangle (nodes 1, 3, 4)
+        double area2 = 0.5 * std::abs(x1 * (y3 - y4) + x3 * (y4 - y1) + x4 * (y1 - y3));
+
+        // Total area of the quadrilateral
+        area = area1 + area2;
+    }
+
     // Calculate damping matrix elements (Asymmetric matrix)
     // Nielsen, A. H. (2006, May). Absorbing boundary conditions for seismic analysis in ABAQUS. In ABAQUS users’ conference (pp. 359-376).
-    damping_matrix(6, 6) += density * wave_velocity_p; // c33
-    damping_matrix(0, 0) += density * wave_velocity_p; // c55
-    damping_matrix(6, 4) -= density * wave_velocity_p; // c31
-    damping_matrix(0, 2) -= density * wave_velocity_p; // c57
+    rDampingMatrix(6, 6) = +0.5 * area * density * wave_velocity_p; // c33
+    rDampingMatrix(0, 0) = +0.5 * area * density * wave_velocity_p; // c55
+    rDampingMatrix(6, 4) = -0.5 * area * density * wave_velocity_p; // c31
+    rDampingMatrix(0, 2) = -0.5 * area * density * wave_velocity_p; // c57
 
-    damping_matrix(7, 7) += density * wave_velocity_s; // c44
-    damping_matrix(1, 1) += density * wave_velocity_s; // c66
-    damping_matrix(7, 5) -= density * wave_velocity_s; // c42
-    damping_matrix(1, 3) -= density * wave_velocity_s; // c68
+    rDampingMatrix(7, 7) = +0.5 * area * density * wave_velocity_s; // c44
+    rDampingMatrix(1, 1) = +0.5 * area * density * wave_velocity_s; // c66
+    rDampingMatrix(7, 5) = -0.5 * area * density * wave_velocity_s; // c42
+    rDampingMatrix(1, 3) = -0.5 * area * density * wave_velocity_s; // c68
 
     KRATOS_CATCH("")
 }
@@ -305,37 +329,23 @@ void FreeFieldInterfaceElement::CalculateAll(
 
         if ( CalculateResidualVectorFlag ) { // Calculation of the matrix is required
             this->CalculateAndAddResidualVector(rRightHandSideVector, this_kinematic_variables, rCurrentProcessInfo, body_force, this_constitutive_variables.StressVector, int_to_reference_weight);
-
-            // Initialize damping and stiffness matrices
-            Matrix damping_matrix(mat_size, mat_size);
-            noalias(damping_matrix) = ZeroMatrix(mat_size, mat_size);
-            Matrix stiffness_matrix(mat_size, mat_size);
-            noalias(stiffness_matrix) = ZeroMatrix(mat_size, mat_size);
-
-            // Calculate the damping matrix
-            CalculateFreeFieldDampingMatrix(damping_matrix, rCurrentProcessInfo);
-
-            // Calculate the stiffness matrix
-            CalculateFreeFieldStiffnessMatrix(stiffness_matrix, rCurrentProcessInfo);
-
-            // Obtain the velocities
-            Vector velocities(mat_size);
-            GetFirstDerivativesVector(velocities);
-
-            // Obtain the displacements
-            Vector displacements(mat_size);
-            GetValuesVector(displacements);
-
-            // Calculate the residual force vector
-            Vector damping_contribution = prod(damping_matrix, velocities);
-            Vector stiffness_contribution = prod(stiffness_matrix, displacements);
-
-            for (SizeType i = 0; i < mat_size; ++i) {
-                rRightHandSideVector[i] += int_to_reference_weight * damping_contribution[i];
-                rRightHandSideVector[i] += int_to_reference_weight * stiffness_contribution[i];
-            }
-
         }
+    }
+
+    // Initialize damping and stiffness matrices
+    Matrix stiffness_matrix(mat_size, mat_size);
+    noalias(stiffness_matrix) = ZeroMatrix(mat_size, mat_size);
+
+    // Calculate the stiffness matrix
+    CalculateFreeFieldStiffnessMatrix(stiffness_matrix, rCurrentProcessInfo);
+    // Obtain the displacements
+    Vector displacements(mat_size);
+    GetValuesVector(displacements);
+
+    Vector stiffness_contribution = prod(stiffness_matrix, displacements);
+
+    for (SizeType i = 0; i < mat_size; ++i) {
+        rRightHandSideVector[i] -= stiffness_contribution[i];
     }
 
     KRATOS_CATCH( "" )
@@ -359,6 +369,16 @@ void FreeFieldInterfaceElement::CalculateKinematicVariables(
     rThisKinematicVariables.detJ0 = CalculateDerivativesOnReferenceConfiguration(rThisKinematicVariables.J0, rThisKinematicVariables.InvJ0, rThisKinematicVariables.DN_DX, PointNumber, rIntegrationMethod);
 
     KRATOS_ERROR_IF(rThisKinematicVariables.detJ0 < 0.0) << "WARNING:: ELEMENT ID: " << this->Id() << " INVERTED. DETJ0: " << rThisKinematicVariables.detJ0 << std::endl;
+
+    // Shape functions derivatives in the reference configuration
+    rThisKinematicVariables.DN_DX(0, 0) = 0.0;
+    rThisKinematicVariables.DN_DX(0, 1) = 0.0;
+    rThisKinematicVariables.DN_DX(1, 0) = 0.0;
+    rThisKinematicVariables.DN_DX(1, 1) = 1.0 / (r_geometry[1].Coordinates()[1] - r_geometry[2].Coordinates()[1]);
+    rThisKinematicVariables.DN_DX(2, 0) = 0.0;
+    rThisKinematicVariables.DN_DX(2, 1) = 1.0 / (r_geometry[2].Coordinates()[1] - r_geometry[1].Coordinates()[1]);
+    rThisKinematicVariables.DN_DX(3, 0) = 0.0;
+    rThisKinematicVariables.DN_DX(3, 1) = 0.0;
 
     // Compute B
     CalculateB( rThisKinematicVariables.B, rThisKinematicVariables.DN_DX, r_integration_points, PointNumber );
@@ -418,32 +438,6 @@ void FreeFieldInterfaceElement::CalculateB(
 
     StructuralMechanicsElementUtilities::CalculateB(*this, rDN_DX, rB);
 
-    rB(0, 0) = 0.0;
-    rB(0, 1) = 0.0;
-    rB(0, 2) = 0.0;
-    rB(0, 3) = 0.0;
-    rB(0, 4) = 0.0;
-    rB(0, 5) = 0.0;
-    rB(0, 6) = 0.0;
-    rB(0, 7) = 0.0;
-    rB(1, 2) = 0.0;
-    rB(1, 4) = 0.0;
-    rB(2, 0) = 0.0;
-    rB(2, 1) = 0.0;
-    rB(2, 3) = 0.0;
-    rB(2, 5) = 0.0;
-    rB(2, 6) = 0.0;
-    rB(2, 7) = 0.0;
-
-    if (PointNumber == 0 || PointNumber == 3) {
-        rB(1, 0) = 0.0;
-        rB(1, 1) = 0.0;
-        rB(1, 3) = 0.0;
-        rB(1, 5) = 0.0;
-        rB(1, 6) = 0.0;
-        rB(1, 7) = 0.0;
-    }
-
     KRATOS_CATCH( "" )
 }
 
@@ -469,6 +463,26 @@ void FreeFieldInterfaceElement::CalculateAndAddKm(
     ) const
 {
     noalias( rLeftHandSideMatrix ) += IntegrationWeight * prod( trans( B ), Matrix(prod(D, B)));
+
+    // Get material properties
+    double n_dir = this->GetValue(NORMAL_DIRECTION);
+
+    const double young = 34e9;
+    const double poisson = 0.29;
+    const double lambda = young * poisson / ((1.0 + poisson) * (1.0 - 2.0 * poisson));
+    const double mu = young / (2.0 * (1.0 + poisson));
+
+    // Asymmetric matrix:
+    // Nielsen, A. H. (2006, May). Absorbing boundary conditions for seismic analysis in ABAQUS. In ABAQUS users’ conference (pp. 359-376).
+    rLeftHandSideMatrix(6, 5) = +0.5 * n_dir * lambda; // k32
+    rLeftHandSideMatrix(0, 5) = +0.5 * n_dir * lambda; // k52
+    rLeftHandSideMatrix(6, 3) = -0.5 * n_dir * lambda; // k38
+    rLeftHandSideMatrix(0, 3) = -0.5 * n_dir * lambda; // k58
+
+    rLeftHandSideMatrix(7, 4) = +0.5 * n_dir * mu; // k41
+    rLeftHandSideMatrix(1, 4) = +0.5 * n_dir * mu; // k61
+    rLeftHandSideMatrix(7, 2) = -0.5 * n_dir * mu; // k47
+    rLeftHandSideMatrix(1, 2) = -0.5 * n_dir * mu; // k67
 }
 
 /***********************************************************************************/
@@ -489,15 +503,15 @@ void FreeFieldInterfaceElement::CalculateFreeFieldStiffnessMatrix(
 
     // Asymmetric matrix:
     // Nielsen, A. H. (2006, May). Absorbing boundary conditions for seismic analysis in ABAQUS. In ABAQUS users’ conference (pp. 359-376).
-    stiffness_matrix(6, 5) += 0.5 * n_dir * lambda; // k32
-    stiffness_matrix(0, 5) += 0.5 * n_dir * lambda; // k52
-    stiffness_matrix(6, 3) -= 0.5 * n_dir * lambda; // k38
-    stiffness_matrix(0, 3) -= 0.5 * n_dir * lambda; // k58
+    stiffness_matrix(6, 5) = +0.5 * n_dir * lambda; // k32
+    stiffness_matrix(0, 5) = +0.5 * n_dir * lambda; // k52
+    stiffness_matrix(6, 3) = -0.5 * n_dir * lambda; // k38
+    stiffness_matrix(0, 3) = -0.5 * n_dir * lambda; // k58
 
-    stiffness_matrix(7, 4) += 0.5 * n_dir * mu; // k41
-    stiffness_matrix(1, 4) += 0.5 * n_dir * mu; // k61
-    stiffness_matrix(7, 2) -= 0.5 * n_dir * mu; // k47
-    stiffness_matrix(1, 2) -= 0.5 * n_dir * mu; // k67
+    stiffness_matrix(7, 4) = +0.5 * n_dir * mu; // k41
+    stiffness_matrix(1, 4) = +0.5 * n_dir * mu; // k61
+    stiffness_matrix(7, 2) = -0.5 * n_dir * mu; // k47
+    stiffness_matrix(1, 2) = -0.5 * n_dir * mu; // k67
 }
 
 /***********************************************************************************/
