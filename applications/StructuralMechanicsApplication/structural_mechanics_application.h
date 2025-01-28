@@ -108,6 +108,7 @@
 #include "custom_conditions/displacement_control_condition.h"
 #include "custom_conditions/moving_load_condition.h"
 #include "custom_conditions/free_field_line_condition_2d.h"
+#include "custom_conditions/free_field_point_load_condition.h"
 
 /* Adding the displacement-based SBM condition */
 #include "custom_conditions/displacement_shifted_boundary_condition.h"
@@ -525,6 +526,8 @@ private:
     // Free field
     const FreeFieldLineCondition2D mFreeFieldLineCondition2D2N;
     const FreeFieldLineCondition2D mFreeFieldLineCondition2D3N;
+    const FreeFieldPointLoadCondition mFreeFieldPointLoadCondition2D1N;
+    const FreeFieldPointLoadCondition mFreeFieldPointLoadCondition3D1N;
 
     /* CONSTITUTIVE LAWS */
     // Linear elastics laws

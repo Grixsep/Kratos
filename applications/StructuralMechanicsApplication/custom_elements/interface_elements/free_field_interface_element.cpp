@@ -155,15 +155,12 @@ void FreeFieldInterfaceElement::CalculateMassMatrix(
     // Total mass of the element
     const double element_mass = area * density * thickness;
 
-    // Distribute the total mass among the nodes of the element
-    const double lumped_mass = element_mass;
-
-    // Assemble the lumped mass matrix
+    // Assemble the mass matrix
     for (IndexType i = 0; i < number_of_nodes; ++i) {
         for (SizeType j = 0; j < dimension; ++j) {
             const SizeType index = i * dimension + j;
             if (index == 2 || index == 3 || index == 4 || index == 5) {
-                rMassMatrix(index, index) = lumped_mass;
+                rMassMatrix(index, index) = 0.5 * element_mass;
             } else {
                 rMassMatrix(index, index) = 0.0;
             }
@@ -327,25 +324,21 @@ void FreeFieldInterfaceElement::CalculateAll(
             this->CalculateAndAddKm( rLeftHandSideMatrix, this_kinematic_variables.B, this_constitutive_variables.D, int_to_reference_weight );
         }
 
-        if ( CalculateResidualVectorFlag ) { // Calculation of the matrix is required
-            this->CalculateAndAddResidualVector(rRightHandSideVector, this_kinematic_variables, rCurrentProcessInfo, body_force, this_constitutive_variables.StressVector, int_to_reference_weight);
-        }
+        // if ( CalculateResidualVectorFlag ) { // Calculation of the matrix is required
+        //     this->CalculateAndAddResidualVector(rRightHandSideVector, this_kinematic_variables, rCurrentProcessInfo, body_force, this_constitutive_variables.StressVector, int_to_reference_weight);
+        // }
     }
 
-    // Initialize damping and stiffness matrices
-    Matrix stiffness_matrix(mat_size, mat_size);
-    noalias(stiffness_matrix) = ZeroMatrix(mat_size, mat_size);
+    if ( CalculateStiffnessMatrixFlag && CalculateResidualVectorFlag ) { // Calculation of the matrix is required
+        // Obtain the displacements
+        Vector displacements(mat_size);
+        GetValuesVector(displacements);
 
-    // Calculate the stiffness matrix
-    CalculateFreeFieldStiffnessMatrix(stiffness_matrix, rCurrentProcessInfo);
-    // Obtain the displacements
-    Vector displacements(mat_size);
-    GetValuesVector(displacements);
+        Vector stiffness_contribution = prod(rLeftHandSideMatrix, displacements);
 
-    Vector stiffness_contribution = prod(stiffness_matrix, displacements);
-
-    for (SizeType i = 0; i < mat_size; ++i) {
-        rRightHandSideVector[i] -= stiffness_contribution[i];
+        for (SizeType i = 0; i < mat_size; ++i) {
+            rRightHandSideVector[i] -= stiffness_contribution[i];
+        }
     }
 
     KRATOS_CATCH( "" )

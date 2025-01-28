@@ -293,8 +293,9 @@ KratosStructuralMechanicsApplication::KratosStructuralMechanicsApplication()
 
       // Adding Free-field conditions
       mFreeFieldLineCondition2D2N(0, Condition::GeometryType::Pointer(new Line2D2<NodeType >(Condition::GeometryType::PointsArrayType(2)))),
-      mFreeFieldLineCondition2D3N(0, Condition::GeometryType::Pointer(new Line2D3<NodeType >(Condition::GeometryType::PointsArrayType(3)))){}
-
+      mFreeFieldLineCondition2D3N(0, Condition::GeometryType::Pointer(new Line2D3<NodeType >(Condition::GeometryType::PointsArrayType(3)))),
+      mFreeFieldPointLoadCondition2D1N(0, Condition::GeometryType::Pointer(new Point2D<NodeType >(Condition::GeometryType::PointsArrayType(1)))),
+      mFreeFieldPointLoadCondition3D1N(0, Condition::GeometryType::Pointer(new Point3D<NodeType >(Condition::GeometryType::PointsArrayType(1)))){}
 
 void KratosStructuralMechanicsApplication::Register() {
     KRATOS_INFO("") << "    KRATOS   ___|  |                   |                   |\n"
@@ -807,6 +808,8 @@ void KratosStructuralMechanicsApplication::Register() {
     // Free field
     KRATOS_REGISTER_CONDITION("FreeFieldLineCondition2D2N", mFreeFieldLineCondition2D2N)
     KRATOS_REGISTER_CONDITION("FreeFieldLineCondition2D3N", mFreeFieldLineCondition2D3N)
+    KRATOS_REGISTER_CONDITION("FreeFieldPointLoadCondition2D1N", mFreeFieldPointLoadCondition2D1N)
+    KRATOS_REGISTER_CONDITION("FreeFieldPointLoadCondition3D1N", mFreeFieldPointLoadCondition3D1N)
 
     // Register linear elastics laws
     KRATOS_REGISTER_CONSTITUTIVE_LAW("TrussConstitutiveLaw", mTrussConstitutiveLaw);
