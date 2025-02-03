@@ -618,8 +618,14 @@ void BaseSolidElement::CalculateMassMatrix(
     if (compute_lumped_mass_matrix) {
         VectorType temp_vector(mat_size);
         this->CalculateLumpedMassVector(temp_vector, rCurrentProcessInfo);
-        for (IndexType i = 0; i < mat_size; ++i)
-            rMassMatrix(i, i) = temp_vector[i];
+        // Asignar un valor de masa aleatorio a cada nodo
+        for (IndexType i = 0; i < number_of_nodes; ++i) {
+            double nodal_mass = r_geom[i].GetValue(NODAL_MASS);
+            for (SizeType dim = 0; dim < dimension; ++dim) {
+                const IndexType index = i * dimension + dim;
+                rMassMatrix(index, index) = temp_vector[index] + nodal_mass;
+            }
+        }
     } else { // CONSISTENT MASS
         const double density = StructuralMechanicsElementUtilities::GetDensityForMassMatrixComputation(*this);
         const double thickness = (dimension == 2 && r_prop.Has(THICKNESS)) ? r_prop[THICKNESS] : 1.0;
