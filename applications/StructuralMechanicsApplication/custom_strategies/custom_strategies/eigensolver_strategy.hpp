@@ -453,9 +453,9 @@ public:
         this->AssignVariables(Eigenvalues,Eigenvectors);
 
 
-        // if (mComputeModalDecompostion) {
+        if (mComputeModalDecompostion) {
             ComputeModalDecomposition(Eigenvectors);
-        // }
+        }
 
         return true;
         KRATOS_CATCH("")
