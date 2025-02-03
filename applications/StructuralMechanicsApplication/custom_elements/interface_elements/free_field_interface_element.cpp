@@ -323,10 +323,6 @@ void FreeFieldInterfaceElement::CalculateAll(
             // Contributions to stiffness matrix calculated on the reference config
             this->CalculateAndAddKm( rLeftHandSideMatrix, this_kinematic_variables.B, this_constitutive_variables.D, int_to_reference_weight );
         }
-
-        // if ( CalculateResidualVectorFlag ) { // Calculation of the matrix is required
-        //     this->CalculateAndAddResidualVector(rRightHandSideVector, this_kinematic_variables, rCurrentProcessInfo, body_force, this_constitutive_variables.StressVector, int_to_reference_weight);
-        // }
     }
 
     if ( CalculateStiffnessMatrixFlag && CalculateResidualVectorFlag ) { // Calculation of the matrix is required
@@ -476,35 +472,6 @@ void FreeFieldInterfaceElement::CalculateAndAddKm(
     rLeftHandSideMatrix(1, 4) = +0.5 * n_dir * mu; // k61
     rLeftHandSideMatrix(7, 2) = -0.5 * n_dir * mu; // k47
     rLeftHandSideMatrix(1, 2) = -0.5 * n_dir * mu; // k67
-}
-
-/***********************************************************************************/
-/***********************************************************************************/
-
-void FreeFieldInterfaceElement::CalculateFreeFieldStiffnessMatrix(
-    MatrixType& stiffness_matrix,
-    const ProcessInfo& rCurrentProcessInfo
-    ) const
-{
-    // Get material properties
-    double n_dir = this->GetValue(NORMAL_DIRECTION);
-
-    const double young = 34e9;
-    const double poisson = 0.29;
-    const double lambda = young * poisson / ((1.0 + poisson) * (1.0 - 2.0 * poisson));
-    const double mu = young / (2.0 * (1.0 + poisson));
-
-    // Asymmetric matrix:
-    // Nielsen, A. H. (2006, May). Absorbing boundary conditions for seismic analysis in ABAQUS. In ABAQUS users’ conference (pp. 359-376).
-    stiffness_matrix(6, 5) = +0.5 * n_dir * lambda; // k32
-    stiffness_matrix(0, 5) = +0.5 * n_dir * lambda; // k52
-    stiffness_matrix(6, 3) = -0.5 * n_dir * lambda; // k38
-    stiffness_matrix(0, 3) = -0.5 * n_dir * lambda; // k58
-
-    stiffness_matrix(7, 4) = +0.5 * n_dir * mu; // k41
-    stiffness_matrix(1, 4) = +0.5 * n_dir * mu; // k61
-    stiffness_matrix(7, 2) = -0.5 * n_dir * mu; // k47
-    stiffness_matrix(1, 2) = -0.5 * n_dir * mu; // k67
 }
 
 /***********************************************************************************/

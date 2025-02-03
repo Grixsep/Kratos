@@ -291,18 +291,6 @@ protected:
         const double IntegrationWeight
         ) const override;
 
-    /**
-     * @brief Calculation of the stiffness matrix
-     * @param rLeftHandSideMatrix The local LHS of the element
-     * @param B The deformation matrix
-     * @param D The constitutive matrix
-     * @param IntegrationWeight The integration weight of the corresponding Gauss point
-     */
-    void CalculateFreeFieldStiffnessMatrix(
-        MatrixType& stiffness_matrix,
-        const ProcessInfo& rCurrentProcessInfo
-        ) const;
-
     ///@}
     ///@name Protected Operations
     ///@{

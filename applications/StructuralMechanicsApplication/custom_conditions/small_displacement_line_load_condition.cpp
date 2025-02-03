@@ -142,10 +142,16 @@ void SmallDisplacementLineLoadCondition<TDim>::CalculateAll(
 
     // Sizing work matrices
     Vector pressure_on_nodes = ZeroVector( number_of_nodes );
+    Vector stress_on_nodes_x = ZeroVector( number_of_nodes );
+    Vector stress_on_nodes_y = ZeroVector( number_of_nodes );
+    Vector stress_on_nodes_z = ZeroVector( number_of_nodes );
 
     // Pressure applied to the element itself
     if constexpr (TDim == 2) {
         double pressure_on_condition = 0.0;
+        double stress_on_condition_x = 0.0;
+        double stress_on_condition_y = 0.0;
+        double stress_on_condition_z = 0.0;
         if( this->Has( PRESSURE ) ) {
             pressure_on_condition += this->GetValue( PRESSURE );
         }
@@ -155,14 +161,41 @@ void SmallDisplacementLineLoadCondition<TDim>::CalculateAll(
         if( this->Has( POSITIVE_FACE_PRESSURE ) ) {
             pressure_on_condition -= this->GetValue( POSITIVE_FACE_PRESSURE );
         }
+        if( this->Has( STRESS_XX ) ) {
+            stress_on_condition_x += this->GetValue( STRESS_XX );
+        }
+        if( this->Has( STRESS_YY ) ) {
+            stress_on_condition_y += this->GetValue( STRESS_YY );
+        }
+        if( this->Has( STRESS_ZZ ) ) {
+            stress_on_condition_z += this->GetValue( STRESS_ZZ );
+        }
 
         for ( IndexType i = 0; i < pressure_on_nodes.size(); i++ ) {
             pressure_on_nodes[i] = pressure_on_condition;
-            if( r_geometry[i].SolutionStepsDataHas( NEGATIVE_FACE_PRESSURE) ) {
+            if( r_geometry[i].SolutionStepsDataHas( NEGATIVE_FACE_PRESSURE ) ) {
                 pressure_on_nodes[i] += r_geometry[i].FastGetSolutionStepValue( NEGATIVE_FACE_PRESSURE );
             }
-            if( r_geometry[i].SolutionStepsDataHas( POSITIVE_FACE_PRESSURE) ) {
+            if( r_geometry[i].SolutionStepsDataHas( POSITIVE_FACE_PRESSURE ) ) {
                 pressure_on_nodes[i] -= r_geometry[i].FastGetSolutionStepValue( POSITIVE_FACE_PRESSURE );
+            }
+        }
+        for ( IndexType i = 0; i < stress_on_nodes_x.size(); i++ ) {
+            stress_on_nodes_x[i] = stress_on_condition_x;
+            if( r_geometry[i].SolutionStepsDataHas( STRESS_XX ) ) {
+                stress_on_nodes_x[i] -= r_geometry[i].FastGetSolutionStepValue( STRESS_XX );
+            }
+        }
+        for ( IndexType i = 0; i < stress_on_nodes_y.size(); i++ ) {
+            stress_on_nodes_y[i] = stress_on_condition_y;
+            if( r_geometry[i].SolutionStepsDataHas( STRESS_YY ) ) {
+                stress_on_nodes_y[i] -= r_geometry[i].FastGetSolutionStepValue( STRESS_YY );
+            }
+        }
+        for ( IndexType i = 0; i < stress_on_nodes_z.size(); i++ ) {
+            stress_on_nodes_z[i] = stress_on_condition_z;
+            if( r_geometry[i].SolutionStepsDataHas( STRESS_ZZ ) ) {
+                stress_on_nodes_z[i] -= r_geometry[i].FastGetSolutionStepValue( STRESS_ZZ );
             }
         }
     }
@@ -185,8 +218,14 @@ void SmallDisplacementLineLoadCondition<TDim>::CalculateAll(
 
         // Calculating the pressure on the gauss point
         double gauss_pressure = 0.0;
+        double gauss_stress_x = 0.0;
+        double gauss_stress_y = 0.0;
+        double gauss_stress_z = 0.0;
         for ( IndexType ii = 0; ii < number_of_nodes; ii++ ) {
             gauss_pressure += rNcontainer( point_number, ii ) * pressure_on_nodes[ii];
+            gauss_stress_x += rNcontainer( point_number, ii ) * stress_on_nodes_x[ii];
+            gauss_stress_y += rNcontainer( point_number, ii ) * stress_on_nodes_y[ii];
+            gauss_stress_z += rNcontainer( point_number, ii ) * stress_on_nodes_z[ii];
         }
 
         // Definition of the tangent
@@ -207,6 +246,24 @@ void SmallDisplacementLineLoadCondition<TDim>::CalculateAll(
                 MathUtils<double>::UnitCrossProduct(normal, tangent_xi, tangent_eta);
 
                 this->CalculateAndAddPressureForce( rRightHandSideVector, row( rNcontainer, point_number ), normal, gauss_pressure, integration_weight );
+            }
+            if ( gauss_stress_x != 0.0 ) {
+                array_1d<double, 3> normal = ZeroVector(3);
+                normal[0] = 1.0;
+
+                this->CalculateAndAddPressureForce( rRightHandSideVector, row( rNcontainer, point_number ), normal, gauss_stress_x, integration_weight );
+            }
+            if ( gauss_stress_y != 0.0 ) {
+                array_1d<double, 3> normal = ZeroVector(3);
+                normal[1] = 1.0;
+
+                this->CalculateAndAddPressureForce( rRightHandSideVector, row( rNcontainer, point_number ), normal, gauss_stress_y, integration_weight );
+            }
+            if ( gauss_stress_z != 0.0 ) {
+                array_1d<double, 3> normal = ZeroVector(3);
+                normal[2] = 1.0;
+
+                this->CalculateAndAddPressureForce( rRightHandSideVector, row( rNcontainer, point_number ), normal, gauss_stress_z, integration_weight );
             }
         }
 

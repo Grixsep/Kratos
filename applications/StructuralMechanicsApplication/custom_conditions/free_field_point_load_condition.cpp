@@ -165,8 +165,8 @@ void FreeFieldPointLoadCondition::CalculateAll(
         // Compute damping forces
         array_1d<double, 3> damping_force = ZeroVector(3);
 
-        damping_force[0] = -density * (wave_velocity_s * velocity[0]);
-        damping_force[1] = -density * (wave_velocity_p * velocity[1]);
+        damping_force[0] = -density * (wave_velocity_p * velocity[0]);
+        damping_force[1] = -density * (wave_velocity_s * velocity[1]);
         damping_force[2] = -density * (wave_velocity_s * velocity[2]);
 
         // Add damping force to RHS

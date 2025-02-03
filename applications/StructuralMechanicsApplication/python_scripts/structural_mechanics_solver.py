@@ -176,6 +176,9 @@ class MechanicalSolver(PythonSolver):
         # Add specific variables for the problem conditions.
         self.main_model_part.AddNodalSolutionStepVariable(KratosMultiphysics.POSITIVE_FACE_PRESSURE)
         self.main_model_part.AddNodalSolutionStepVariable(KratosMultiphysics.NEGATIVE_FACE_PRESSURE)
+        self.main_model_part.AddNodalSolutionStepVariable(StructuralMechanicsApplication.STRESS_XX)
+        self.main_model_part.AddNodalSolutionStepVariable(StructuralMechanicsApplication.STRESS_YY)
+        self.main_model_part.AddNodalSolutionStepVariable(StructuralMechanicsApplication.STRESS_ZZ)
         self.main_model_part.AddNodalSolutionStepVariable(StructuralMechanicsApplication.POINT_LOAD)
         self.main_model_part.AddNodalSolutionStepVariable(StructuralMechanicsApplication.LINE_LOAD)
         self.main_model_part.AddNodalSolutionStepVariable(StructuralMechanicsApplication.SURFACE_LOAD)
