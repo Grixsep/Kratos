@@ -620,10 +620,9 @@ void BaseSolidElement::CalculateMassMatrix(
         this->CalculateLumpedMassVector(temp_vector, rCurrentProcessInfo);
         // Asignar un valor de masa aleatorio a cada nodo
         for (IndexType i = 0; i < number_of_nodes; ++i) {
-            double added_mass = r_geom[i].GetValue(ADDED_MASS);
             for (SizeType dim = 0; dim < dimension; ++dim) {
                 const IndexType index = i * dimension + dim;
-                rMassMatrix(index, index) = temp_vector[index] + 0.0;
+                rMassMatrix(index, index) = temp_vector[index];
             }
         }
     } else { // CONSISTENT MASS
@@ -1913,7 +1912,8 @@ void BaseSolidElement::CalculateLumpedMassVector(
     lumping_factors = GetGeometry().LumpingFactors( lumping_factors );
 
     for ( IndexType i = 0; i < number_of_nodes; ++i ) {
-        const double temp = lumping_factors[i] * total_mass;
+        double added_mass = r_geom[i].GetValue(ADDED_MASS);
+        const double temp = lumping_factors[i] * (total_mass + added_mass);
         for ( IndexType j = 0; j < dimension; ++j ) {
             IndexType index = i * dimension + j;
             rLumpedMassVector[index] = temp;
