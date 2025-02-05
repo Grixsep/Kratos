@@ -202,6 +202,14 @@ protected:
         const bool CalculateResidualVectorFlag
         ) override;
 
+    void CalculateAndAddPressureForce(
+        Vector& rRightHandSideVector,
+        const Vector& rN,
+        const array_1d<double, 3>& rNormal,
+        double Pressure,
+        double IntegrationWeight
+        ) const;
+
     /**
      * It calcules the integration load for the point load
      */

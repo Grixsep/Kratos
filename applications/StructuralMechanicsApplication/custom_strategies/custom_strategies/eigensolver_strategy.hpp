@@ -776,10 +776,32 @@ private:
     void ComputeModalDecomposition(const DenseMatrixType& rEigenvectors)
     {
         const SparseMatrixType& rMassMatrix = this->GetMassMatrix();
-        SparseMatrixType m_temp = ZeroMatrix(rEigenvectors.size1(),rEigenvectors.size2());
-        boost::numeric::ublas::axpy_prod(rEigenvectors,rMassMatrix,m_temp,true);
-        Matrix modal_mass_matrix = ZeroMatrix(m_temp.size1(),m_temp.size1());
-        boost::numeric::ublas::axpy_prod(m_temp,trans(rEigenvectors),modal_mass_matrix);
+        DenseMatrixType NormEigenvectors = rEigenvectors;
+
+        // Normalización modal respecto a la masa
+        for (std::size_t mode = 0; mode < NormEigenvectors.size1(); ++mode) { // Ahora recorremos modos
+            double norm_factor = 0.0;
+
+            for (std::size_t dof_i = 0; dof_i < NormEigenvectors.size2(); ++dof_i) {
+                for (std::size_t dof_j = 0; dof_j < NormEigenvectors.size2(); ++dof_j) {
+                    norm_factor += NormEigenvectors(mode, dof_i) * rMassMatrix(dof_i, dof_j) * NormEigenvectors(mode, dof_j);
+                }
+            }
+
+            norm_factor = std::sqrt(norm_factor);
+            if (norm_factor > 1.0e-12) {
+                for (std::size_t dof = 0; dof < NormEigenvectors.size2(); ++dof) {
+                    NormEigenvectors(mode, dof) /= norm_factor;
+                }
+            }
+        }
+
+        // Cálculo de la matriz modal de masa
+        SparseMatrixType m_temp = ZeroMatrix(NormEigenvectors.size1(), NormEigenvectors.size2());
+        Matrix modal_mass_matrix = ZeroMatrix(NormEigenvectors.size1(), NormEigenvectors.size1());
+
+        boost::numeric::ublas::axpy_prod(NormEigenvectors, rMassMatrix, m_temp, true);
+        boost::numeric::ublas::axpy_prod(m_temp, trans(NormEigenvectors), modal_mass_matrix);
 
         double total_modal_mass = 0.0;
 
@@ -791,13 +813,13 @@ private:
         }
 
         // Ensure the excitation vector has the correct size
-        SparseMatrixType ExcitationMatrixX = ZeroMatrix(rEigenvectors.size1(),rEigenvectors.size2());
-        SparseMatrixType ExcitationMatrixY = ZeroMatrix(rEigenvectors.size1(),rEigenvectors.size2());
-        SparseMatrixType ExcitationMatrixZ = ZeroMatrix(rEigenvectors.size1(),rEigenvectors.size2());
+        SparseMatrixType ExcitationMatrixX = ZeroMatrix(NormEigenvectors.size1(),NormEigenvectors.size2());
+        SparseMatrixType ExcitationMatrixY = ZeroMatrix(NormEigenvectors.size1(),NormEigenvectors.size2());
+        SparseMatrixType ExcitationMatrixZ = ZeroMatrix(NormEigenvectors.size1(),NormEigenvectors.size2());
 
         // Loop through the rows and columns
-        for (std::size_t i = 0; i < rEigenvectors.size1(); ++i) {
-            for (std::size_t j = 0; j < rEigenvectors.size2(); ++j) {
+        for (std::size_t i = 0; i < NormEigenvectors.size1(); ++i) {
+            for (std::size_t j = 0; j < NormEigenvectors.size2(); ++j) {
                 if (j % 3 == 0) { // X-direction DOFs
                     ExcitationMatrixX(i, j) = 1.0;
                     ExcitationMatrixY(i, j) = 0.0;
@@ -814,26 +836,26 @@ private:
             }
         }
 
-        SparseMatrixType m_temp_X = ZeroMatrix(rEigenvectors.size1(),rEigenvectors.size2());
-        boost::numeric::ublas::axpy_prod(rEigenvectors,rMassMatrix,m_temp_X,true);
+        SparseMatrixType m_temp_X = ZeroMatrix(NormEigenvectors.size1(),NormEigenvectors.size2());
+        boost::numeric::ublas::axpy_prod(NormEigenvectors,rMassMatrix,m_temp_X,true);
         Matrix modal_mass_matrix_X = ZeroMatrix(m_temp_X.size1(),m_temp_X.size1());
         boost::numeric::ublas::axpy_prod(m_temp_X,trans(ExcitationMatrixX),modal_mass_matrix_X);
 
-        SparseMatrixType m_temp_Y = ZeroMatrix(rEigenvectors.size1(),rEigenvectors.size2());
-        boost::numeric::ublas::axpy_prod(rEigenvectors,rMassMatrix,m_temp_Y,true);
+        SparseMatrixType m_temp_Y = ZeroMatrix(NormEigenvectors.size1(),NormEigenvectors.size2());
+        boost::numeric::ublas::axpy_prod(NormEigenvectors,rMassMatrix,m_temp_Y,true);
         Matrix modal_mass_matrix_Y = ZeroMatrix(m_temp_Y.size1(),m_temp_Y.size1());
         boost::numeric::ublas::axpy_prod(m_temp_Y,trans(ExcitationMatrixY),modal_mass_matrix_Y);
 
-        SparseMatrixType m_temp_Z = ZeroMatrix(rEigenvectors.size1(),rEigenvectors.size2());
-        boost::numeric::ublas::axpy_prod(rEigenvectors,rMassMatrix,m_temp_Z,true);
+        SparseMatrixType m_temp_Z = ZeroMatrix(NormEigenvectors.size1(),NormEigenvectors.size2());
+        boost::numeric::ublas::axpy_prod(NormEigenvectors,rMassMatrix,m_temp_Z,true);
         Matrix modal_mass_matrix_Z = ZeroMatrix(m_temp_Z.size1(),m_temp_Z.size1());
         boost::numeric::ublas::axpy_prod(m_temp_Z,trans(ExcitationMatrixZ),modal_mass_matrix_Z);
 
         const SparseMatrixType& rStiffnessMatrix = this->GetStiffnessMatrix();
-        SparseMatrixType k_temp = ZeroMatrix(rEigenvectors.size1(),rEigenvectors.size2());
-        boost::numeric::ublas::axpy_prod(rEigenvectors,rStiffnessMatrix,k_temp,true);
+        SparseMatrixType k_temp = ZeroMatrix(NormEigenvectors.size1(),NormEigenvectors.size2());
+        boost::numeric::ublas::axpy_prod(NormEigenvectors,rStiffnessMatrix,k_temp,true);
         Matrix modal_stiffness_matrix = ZeroMatrix(k_temp.size1(),k_temp.size1());
-        boost::numeric::ublas::axpy_prod(k_temp,trans(rEigenvectors),modal_stiffness_matrix);
+        boost::numeric::ublas::axpy_prod(k_temp,trans(NormEigenvectors),modal_stiffness_matrix);
 
         ModelPart& rModelPart = BaseType::GetModelPart();
         rModelPart.GetProcessInfo()[MODAL_MASS_MATRIX] = modal_mass_matrix;
