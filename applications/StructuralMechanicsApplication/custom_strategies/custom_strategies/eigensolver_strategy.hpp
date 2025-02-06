@@ -778,8 +778,8 @@ private:
         const SparseMatrixType& rMassMatrix = this->GetMassMatrix();
         DenseMatrixType NormEigenvectors = rEigenvectors;
 
-        // Normalización modal respecto a la masa
-        for (std::size_t mode = 0; mode < NormEigenvectors.size1(); ++mode) { // Ahora recorremos modos
+        // Modal normalization with respect to the mass matrix
+        for (std::size_t mode = 0; mode < NormEigenvectors.size1(); ++mode) { // Loop through modes
             double norm_factor = 0.0;
 
             for (std::size_t dof_i = 0; dof_i < NormEigenvectors.size2(); ++dof_i) {
@@ -796,19 +796,23 @@ private:
             }
         }
 
-        // Cálculo de la matriz modal de masa
+        // Calculation of the modal mass matrix
         SparseMatrixType m_temp = ZeroMatrix(NormEigenvectors.size1(), NormEigenvectors.size2());
         Matrix modal_mass_matrix = ZeroMatrix(NormEigenvectors.size1(), NormEigenvectors.size1());
 
         boost::numeric::ublas::axpy_prod(NormEigenvectors, rMassMatrix, m_temp, true);
         boost::numeric::ublas::axpy_prod(m_temp, trans(NormEigenvectors), modal_mass_matrix);
 
-        double total_modal_mass = 0.0;
+        // Cálculo de la masa total en cada eje (X, Y, Z)
+        double total_mass_X = 0.0;
+        double total_mass_Y = 0.0;
+        double total_mass_Z = 0.0;
 
         for (std::size_t i = 0; i < rMassMatrix.size1(); ++i) {
-            // Access the diagonal element (i, i)
-            if (i < rMassMatrix.size2()) { // Ensure the matrix is not rectangular with fewer columns
-                total_modal_mass += rMassMatrix(i, i);
+            if (i < rMassMatrix.size2()) {
+                if (i % 3 == 0) total_mass_X += rMassMatrix(i, i);  // Grados de libertad en X
+                if (i % 3 == 1) total_mass_Y += rMassMatrix(i, i);  // Grados de libertad en Y
+                if (i % 3 == 2) total_mass_Z += rMassMatrix(i, i);  // Grados de libertad en Z
             }
         }
 
@@ -832,6 +836,52 @@ private:
                     ExcitationMatrixX(i, j) = 0.0;
                     ExcitationMatrixY(i, j) = 0.0;
                     ExcitationMatrixZ(i, j) = 1.0;
+                }
+            }
+        }
+
+        // Normalize ExcitationMatrixX, Y and Z
+        for (std::size_t i = 0; i < NormEigenvectors.size1(); ++i) {
+            double norm_X = 0.0;
+            for (std::size_t dof_i = 0; dof_i < NormEigenvectors.size2(); ++dof_i) {
+                for (std::size_t dof_j = 0; dof_j < NormEigenvectors.size2(); ++dof_j) {
+                    norm_X += ExcitationMatrixX(i, dof_i) * rMassMatrix(dof_i, dof_j) * ExcitationMatrixX(i, dof_j);
+                }
+            }
+            norm_X = std::sqrt(norm_X);
+            if (norm_X > 1.0e-12) {
+                for (std::size_t dof = 0; dof < NormEigenvectors.size2(); ++dof) {
+                    ExcitationMatrixX(i, dof) /= norm_X;
+                }
+            }
+        }
+
+        for (std::size_t i = 0; i < NormEigenvectors.size1(); ++i) {
+            double norm_Y = 0.0;
+            for (std::size_t dof_i = 0; dof_i < NormEigenvectors.size2(); ++dof_i) {
+                for (std::size_t dof_j = 0; dof_j < NormEigenvectors.size2(); ++dof_j) {
+                    norm_Y += ExcitationMatrixY(i, dof_i) * rMassMatrix(dof_i, dof_j) * ExcitationMatrixY(i, dof_j);
+                }
+            }
+            norm_Y = std::sqrt(norm_Y);
+            if (norm_Y > 1.0e-12) {
+                for (std::size_t dof = 0; dof < NormEigenvectors.size2(); ++dof) {
+                    ExcitationMatrixY(i, dof) /= norm_Y;
+                }
+            }
+        }
+
+        for (std::size_t i = 0; i < NormEigenvectors.size1(); ++i) {
+            double norm_Z = 0.0;
+            for (std::size_t dof_i = 0; dof_i < NormEigenvectors.size2(); ++dof_i) {
+                for (std::size_t dof_j = 0; dof_j < NormEigenvectors.size2(); ++dof_j) {
+                    norm_Z += ExcitationMatrixZ(i, dof_i) * rMassMatrix(dof_i, dof_j) * ExcitationMatrixZ(i, dof_j);
+                }
+            }
+            norm_Z = std::sqrt(norm_Z);
+            if (norm_Z > 1.0e-12) {
+                for (std::size_t dof = 0; dof < NormEigenvectors.size2(); ++dof) {
+                    ExcitationMatrixZ(i, dof) /= norm_Z;
                 }
             }
         }

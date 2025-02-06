@@ -1913,7 +1913,7 @@ void BaseSolidElement::CalculateLumpedMassVector(
 
     for ( IndexType i = 0; i < number_of_nodes; ++i ) {
         double added_mass = r_geom[i].GetValue(ADDED_MASS);
-        const double temp = lumping_factors[i] * (total_mass + added_mass);
+        const double temp = (lumping_factors[i] * total_mass) + (added_mass / GetGeometry().DomainSize());
         for ( IndexType j = 0; j < dimension; ++j ) {
             IndexType index = i * dimension + j;
             rLumpedMassVector[index] = temp;
