@@ -915,8 +915,6 @@ private:
         rModelPart.GetProcessInfo()[MODAL_MASS_MATRIX_Y] = modal_mass_matrix_Y;
         rModelPart.GetProcessInfo()[MODAL_MASS_MATRIX_Z] = modal_mass_matrix_Z;
 
-        rModelPart.GetProcessInfo()[TOTAL_MODAL_MASS] = total_modal_mass;
-
         KRATOS_INFO("ModalMassMatrix")      << modal_mass_matrix << std::endl;
     }
 
