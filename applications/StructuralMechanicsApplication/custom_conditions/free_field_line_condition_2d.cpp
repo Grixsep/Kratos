@@ -170,12 +170,17 @@ void FreeFieldLineCondition2D::CalculateAll(
                 continue; // Skip nodes with zero velocity
             }
 
+            normal[0] = 0.0; normal[1] = 1.0; normal[2] = 0.0;
+            tangent_xi[0] = 1.0; tangent_xi[1] = 0.0; tangent_xi[2] = 0.0;
+            tangent_eta[0] = 0.0; tangent_eta[1] = 0.0; tangent_eta[2] = 1.0;
+
             // Compute normal and tangential components
             const double vn = MathUtils<double>::Dot(velocity, normal);
-            const double vt = MathUtils<double>::Dot(velocity, tangent_xi);
+            const double vt1 = MathUtils<double>::Dot(velocity, tangent_xi);
+            const double vt2 = MathUtils<double>::Dot(velocity, tangent_eta);
 
             // Compute damping forces
-            array_1d<double, 3> damping_force = -density * (wave_velocity_p * vn * normal + wave_velocity_s * vt * tangent_xi);
+            array_1d<double, 3> damping_force = -density * (wave_velocity_p * vn * normal + wave_velocity_s * vt1 * tangent_xi + wave_velocity_s * vt2 * tangent_eta);
 
             // Add damping force to RHS
             const IndexType base = ii * block_size;

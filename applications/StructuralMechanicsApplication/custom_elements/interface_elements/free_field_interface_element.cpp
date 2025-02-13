@@ -146,7 +146,7 @@ void FreeFieldInterfaceElement::CalculateMassMatrix(
     for (IndexType i = 0; i < number_of_nodes; ++i) {
         for (SizeType j = 0; j < dimension; ++j) {
             const SizeType index = i * dimension + j;
-            if (index == 2 || index == 3 || index == 4 || index == 5) {
+            if (index == 4 || index == 5 || index == 6 || index == 7) {
                 rMassMatrix(index, index) = 0.5 * element_mass;
             } else {
                 rMassMatrix(index, index) = 0.0;
@@ -193,7 +193,7 @@ void FreeFieldInterfaceElement::CalculateDampingMatrix(
     const double width = 1.0; // Width of the element, for the moment it is set to 1.0
 
     // Calculate the length in the y direction between two nodes
-    double length = 0.0;
+    double area = 0.0;
     if (dimension == 2 && number_of_nodes >= 2) {
         const auto& node1 = r_geom[0];
         const auto& node2 = r_geom[1];
@@ -203,20 +203,20 @@ void FreeFieldInterfaceElement::CalculateDampingMatrix(
         const double y2 = node2.Y0();
 
         // Calculate the length in the y direction
-        length = std::abs(y2 - y1);
+        area = std::abs(y2 - y1) * width;
     }
 
     // Calculate damping matrix elements (Asymmetric matrix)
     // Nielsen, A. H. (2006, May). Absorbing boundary conditions for seismic analysis in ABAQUS. In ABAQUS users’ conference (pp. 359-376).
-    rDampingMatrix(0, 0) = +0.5 * density * length * width * thickness * wave_velocity_p; // c33
-    rDampingMatrix(2, 2) = +0.5 * density * length * width * thickness * wave_velocity_p; // c55
-    rDampingMatrix(0, 6) = -0.5 * density * length * width * thickness * wave_velocity_p; // c31
-    rDampingMatrix(2, 4) = -0.5 * density * length * width * thickness * wave_velocity_p; // c57
+    rDampingMatrix(0, 0) = +0.5 * density * area * thickness * wave_velocity_p; // c33
+    rDampingMatrix(2, 2) = +0.5 * density * area * thickness * wave_velocity_p; // c55
+    rDampingMatrix(0, 6) = -0.5 * density * area * thickness * wave_velocity_p; // c31
+    rDampingMatrix(2, 4) = -0.5 * density * area * thickness * wave_velocity_p; // c57
 
-    rDampingMatrix(1, 1) = +0.5 * density * length * width * thickness * wave_velocity_s; // c44
-    rDampingMatrix(3, 3) = +0.5 * density * length * width * thickness * wave_velocity_s; // c66
-    rDampingMatrix(1, 7) = -0.5 * density * length * width * thickness * wave_velocity_s; // c42
-    rDampingMatrix(3, 5) = -0.5 * density * length * width * thickness * wave_velocity_s; // c68
+    rDampingMatrix(1, 1) = +0.5 * density * area * thickness * wave_velocity_s; // c44
+    rDampingMatrix(3, 3) = +0.5 * density * area * thickness * wave_velocity_s; // c66
+    rDampingMatrix(1, 7) = -0.5 * density * area * thickness * wave_velocity_s; // c42
+    rDampingMatrix(3, 5) = -0.5 * density * area * thickness * wave_velocity_s; // c68
 
     KRATOS_CATCH("")
 }
@@ -330,28 +330,20 @@ void FreeFieldInterfaceElement::CalculateKinematicVariables(
     const GeometryType::IntegrationMethod& rIntegrationMethod
     )
 {
-    const auto& r_geometry = GetGeometry();
-
     const GeometryType::IntegrationPointsArrayType& r_integration_points = this->IntegrationPoints(rIntegrationMethod);
     // Shape functions
-    rThisKinematicVariables.N = r_geometry.ShapeFunctionsValues(rThisKinematicVariables.N, r_integration_points[PointNumber].Coordinates());
+    if (PointNumber == 0 || PointNumber == 1) {
+        rThisKinematicVariables.N[0] =  rThisKinematicVariables.N[1] =  rThisKinematicVariables.N[2] =  rThisKinematicVariables.N[3] =  0.0;
+    } else {
+        rThisKinematicVariables.N[0] =  0.0;
+        rThisKinematicVariables.N[1] =  0.0;
+        rThisKinematicVariables.N[2] =  0.5 * ( 1.0 - r_integration_points[PointNumber].Coordinates()[1] );
+        rThisKinematicVariables.N[3] =  0.5 * ( 1.0 + r_integration_points[PointNumber].Coordinates()[1] );
+    }
 
     rThisKinematicVariables.detJ0 = CalculateDerivativesOnReferenceConfiguration(rThisKinematicVariables.J0, rThisKinematicVariables.InvJ0, rThisKinematicVariables.DN_DX, PointNumber, rIntegrationMethod);
 
     KRATOS_ERROR_IF(rThisKinematicVariables.detJ0 < 0.0) << "WARNING:: ELEMENT ID: " << this->Id() << " INVERTED. DETJ0: " << rThisKinematicVariables.detJ0 << std::endl;
-
-    // Get material properties
-    const double n_dir = this->GetValue(NORMAL_DIRECTION);
-
-    // Shape functions derivatives in the reference configuration
-    rThisKinematicVariables.DN_DX(0, 0) = 0.0;
-    rThisKinematicVariables.DN_DX(0, 1) = 0.0;
-    rThisKinematicVariables.DN_DX(1, 0) = 0.0;
-    rThisKinematicVariables.DN_DX(1, 1) = 0.0;
-    rThisKinematicVariables.DN_DX(2, 0) = 0.0;
-    rThisKinematicVariables.DN_DX(2, 1) = n_dir / (r_geometry[3].Coordinates()[1] - r_geometry[2].Coordinates()[1]);
-    rThisKinematicVariables.DN_DX(3, 0) = 0.0;
-    rThisKinematicVariables.DN_DX(3, 1) = n_dir / (r_geometry[2].Coordinates()[1] - r_geometry[3].Coordinates()[1]);
 
     // Compute B
     CalculateB( rThisKinematicVariables.B, rThisKinematicVariables.DN_DX, r_integration_points, PointNumber );

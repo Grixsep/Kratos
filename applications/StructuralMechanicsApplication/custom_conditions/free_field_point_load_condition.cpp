@@ -137,8 +137,6 @@ void FreeFieldPointLoadCondition::CalculateAll(
         noalias( rRightHandSideVector ) = ZeroVector( mat_size ); //resetting RHS
     }
 
-    // Vector with a loading applied to the condition
-    array_1d<double, 3> normal = ZeroVector(3);
     double density = 0.0;
     double wave_velocity_p = 0.0;
     double wave_velocity_s = 0.0;
@@ -162,17 +160,27 @@ void FreeFieldPointLoadCondition::CalculateAll(
     for (IndexType ii = 0; ii < number_of_nodes; ++ii) {
         const auto& velocity = r_geometry[ii].FastGetSolutionStepValue(VELOCITY);
 
-        // Compute damping forces
-        array_1d<double, 3> damping_force = ZeroVector(3);
+        // Declaring normal and tangential vectors
+        array_1d<double, 3> normal = ZeroVector(3);
+        array_1d<double, 3> tangent_xi = ZeroVector(3);
+        array_1d<double, 3>  tangent_eta = ZeroVector(3);
 
-        damping_force[0] = -density * (wave_velocity_p * velocity[0]);
-        damping_force[1] = -density * (wave_velocity_s * velocity[1]);
-        damping_force[2] = -density * (wave_velocity_s * velocity[2]);
+        normal[0] = 0.0; normal[1] = 1.0; normal[2] = 0.0;
+        tangent_xi[0] = 1.0; tangent_xi[1] = 0.0; tangent_xi[2] = 0.0;
+        tangent_eta[0] = 0.0; tangent_eta[1] = 0.0; tangent_eta[2] = 1.0;
+
+        // Compute normal and tangential components
+        const double vn = MathUtils<double>::Dot(velocity, normal);
+        const double vt1 = MathUtils<double>::Dot(velocity, tangent_xi);
+        const double vt2 = MathUtils<double>::Dot(velocity, tangent_eta);
+
+        // Compute damping forces
+        array_1d<double, 3> damping_force = -density * (wave_velocity_p * vn * normal + wave_velocity_s * vt1 * tangent_xi + wave_velocity_s * vt2 * tangent_eta);
 
         // Add damping force to RHS
         const IndexType base = ii * block_size;
         for (IndexType k = 0; k < n_dim; ++k) {
-            rRightHandSideVector[base + k] += GetPointLoadIntegrationWeight() * damping_force[k];
+            rRightHandSideVector[base + k] += 0.5 * GetPointLoadIntegrationWeight() * damping_force[k];
         }
     }
 

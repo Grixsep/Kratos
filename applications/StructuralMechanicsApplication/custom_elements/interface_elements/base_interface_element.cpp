@@ -1734,22 +1734,48 @@ double BaseInterfaceElement::CalculateDerivativesOnReferenceConfiguration(
 {
     const GeometryType& r_geom = GetGeometry();
     double detJ0;
-    if (UseGeometryIntegrationMethod()) {
-        GeometryUtils::JacobianOnInitialConfiguration(
-            r_geom,
-            this->IntegrationPoints(ThisIntegrationMethod)[PointNumber], rJ0);
-        MathUtils<double>::InvertMatrix(rJ0, rInvJ0, detJ0);
-        const Matrix& rDN_De =
-            GetGeometry().ShapeFunctionsLocalGradients(ThisIntegrationMethod)[PointNumber];
-        GeometryUtils::ShapeFunctionsGradients(rDN_De, rInvJ0, rDN_DX);
-    } else {
-        const auto& integration_points =  this->IntegrationPoints();
-        GeometryUtils::JacobianOnInitialConfiguration(r_geom, integration_points[PointNumber],rJ0);
-        MathUtils<double>::InvertMatrix(rJ0, rInvJ0, detJ0);
-        Matrix DN_De;
-        GetGeometry().ShapeFunctionsLocalGradients(DN_De, integration_points[PointNumber]);
-        GeometryUtils::ShapeFunctionsGradients(DN_De, rInvJ0, rDN_DX);
+    const auto& integration_points =  this->IntegrationPoints();
+
+    Matrix delta_position(r_geom.PointsNumber(), r_geom.WorkingSpaceDimension());
+    for (std::size_t i = 0; i < r_geom.PointsNumber(); ++i)
+        for (std::size_t j = 0; j < r_geom.WorkingSpaceDimension(); ++j)
+            delta_position(i, j) = r_geom[i].Coordinates()[j] -
+                                    r_geom[i].GetInitialPosition().Coordinates()[j];
+
+    const SizeType working_space_dimension = GetGeometry().WorkingSpaceDimension();
+    const SizeType local_space_dimension = GetGeometry().LocalSpaceDimension();
+    const SizeType points_number = GetGeometry().PointsNumber();
+    if(rJ0.size1() != working_space_dimension || rJ0.size2() != local_space_dimension)
+        rJ0.resize( working_space_dimension, local_space_dimension, false );
+
+    Matrix shape_functions_gradients(points_number, local_space_dimension);
+
+    // Shape functions derivatives in the reference configuration
+    shape_functions_gradients( 0, 0 ) =  0.0;
+    shape_functions_gradients( 0, 1 ) =  0.0;
+    shape_functions_gradients( 1, 0 ) =  0.0;
+    shape_functions_gradients( 1, 1 ) =  0.0;
+    shape_functions_gradients( 2, 0 ) =  0.0;
+    shape_functions_gradients( 2, 1 ) = -0.5 * integration_points[PointNumber].Coordinates()[1];
+    shape_functions_gradients( 3, 0 ) =  0.0;
+    shape_functions_gradients( 3, 1 ) =  0.5 * integration_points[PointNumber].Coordinates()[1];
+
+    rJ0.clear();
+    for (IndexType i = 0; i < points_number; ++i ) {
+        const array_1d<double, 3>& r_coordinates = GetGeometry()[i].Coordinates();
+        for(IndexType k = 0; k< working_space_dimension; ++k) {
+            const double value = r_coordinates[k] - delta_position(i,k);
+            for(IndexType m = 0; m < local_space_dimension; ++m) {
+                rJ0(k,m) += value * shape_functions_gradients(i,m);
+            }
+        }
     }
+
+    rJ0(0, 0) = std::copysign(0.5, rJ0(1, 1));
+    MathUtils<double>::InvertMatrix(rJ0, rInvJ0, detJ0);
+
+    GeometryUtils::ShapeFunctionsGradients(shape_functions_gradients, rInvJ0, rDN_DX);
+
     return detJ0;
 }
 
