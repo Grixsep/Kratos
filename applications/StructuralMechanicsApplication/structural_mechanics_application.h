@@ -128,8 +128,6 @@
 // Constitutive laws for the Timoshenko beams
 #include "custom_constitutive/timoshenko_beam_elastic_constitutive_law.h"
 #include "custom_constitutive/timoshenko_plane_strain_beam_elastic_constitutive_law.h"
-// Constitutive laws for the Free Field elements
-#include "custom_constitutive/free_field_constitutive_law.h"
 
 namespace Kratos
 {
