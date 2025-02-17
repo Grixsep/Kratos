@@ -520,7 +520,6 @@ void SpringDamperElement<TDim>::ConstCalculateRightHandSide(VectorType& rRightHa
     for (std::size_t i = 0; i < msElementSize; ++i) {
         rRightHandSideVector[i] -= elemental_stiffness[i % msLocalSize] * current_displacement[i];
     }
-
     KRATOS_CATCH("");
 }
 
