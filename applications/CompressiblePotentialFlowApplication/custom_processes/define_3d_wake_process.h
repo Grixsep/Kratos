@@ -109,6 +109,7 @@ private:
 
     double mSheddedWakeDistance;
     double mSheddedWakeElementSize;
+    double mGrowFactor;
 
     BoundedVector<double, 3> mWakeNormalOld;
 
@@ -119,7 +120,7 @@ private:
 
     void InitializeWakeSubModelpart() const;
 
-    void MarkTrailingEdgeNodesAndFindWingtipNodes();
+    void MarkTrailingEdgeNodesAndFindWingtiprootNodes();
 
     void ComputeWingLowerSurfaceNormals() const;
 
