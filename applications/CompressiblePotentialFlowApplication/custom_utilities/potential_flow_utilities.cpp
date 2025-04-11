@@ -197,6 +197,9 @@ double ComputeVacuumVelocitySquared(const ProcessInfo& rCurrentProcessInfo)
 
     const array_1d<double, 3>& free_stream_velocity = rCurrentProcessInfo[FREE_STREAM_VELOCITY];
 
+    // compute max velocity allowed by limit Mach number
+    // const double vacuum_velocity_squared = ComputeVacuumVelocitySquared(rCurrentProcessInfo);
+    const double vacuum_velocity_squared = ComputeMaximumVelocitySquared<Dim, NumNodes>(rCurrentProcessInfo);
     // compute squares of values
     const double free_stream_mach_squared = std::pow(free_stream_mach, 2.0);
     const double free_stream_velocity_squared = inner_prod(free_stream_velocity, free_stream_velocity);
@@ -379,7 +382,9 @@ double ComputePerturbationCompressiblePressureCoefficient(const Element& rElemen
     const double v_inf_2 = inner_prod(free_stream_velocity, free_stream_velocity);
     const double M_inf_2 = M_inf * M_inf;
     double v_2 = inner_prod(velocity, velocity);
-    const double vacuum_velocity_squared = ComputeVacuumVelocitySquared(rCurrentProcessInfo);
+    // compute max velocity allowed by limit Mach number
+    const double vacuum_velocity_squared = ComputeMaximumVelocitySquared<Dim, NumNodes>(rCurrentProcessInfo);
+    // const double vacuum_velocity_squared = ComputeVacuumVelocitySquared(rCurrentProcessInfo);
     if( v_2 > vacuum_velocity_squared){
         v_2 = vacuum_velocity_squared;
     }
