@@ -155,6 +155,8 @@ class LaserDrillingTransientSolver(convection_diffusion_transient_solver.Convect
 
         self.material_settings = materials["properties"][0]["Material"]
 
+        # TODO: use the parameters file passed when the simulation object is created, not
+        # a hardcoded one
         with open("ProjectParameters.json", "r") as project_parameters_file:
             self.project_parameters = KratosMultiphysics.Parameters(project_parameters_file.read())
 
@@ -482,6 +484,7 @@ class LaserDrillingTransientSolver(convection_diffusion_transient_solver.Convect
         self.AllocateKratosMemory()
 
         self.SetParameters()
+        print(f"BEAM WAIST DIAMETER ={self.beam_waist_diameter}")
 
         # TODO: change python arrays into numpy arrays?
         # TODO: Explain what these are
