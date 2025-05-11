@@ -1,4 +1,6 @@
- ## Laser Drilling Application  
+### This branch contains the solutions to exercise 2.1 of the 2025 workshop 
+
+## Laser Drilling Application  
 The LaserDrillingApplication is a Kratos application built on top of the ConvectionDiffusionApplication to simulate the process of laser drilling with a femtosecond laser.
 
 ### Introduction
