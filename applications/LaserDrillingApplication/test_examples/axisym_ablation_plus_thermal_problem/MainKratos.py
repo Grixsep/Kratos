@@ -5,6 +5,7 @@ if __name__ == "__main__":
     from sys import argv
 
     if len(argv) > 2:
+        # TODO: Revise these instructions
         err_msg = "Too many input arguments!\n"
         err_msg += "Use this script in the following way:\n"
         err_msg += '- With default ProjectParameters (read from "ProjectParameters.json"):\n'
@@ -16,7 +17,7 @@ if __name__ == "__main__":
     if len(argv) == 2:  # ProjectParameters is being passed from outside
         project_parameters_file_name = argv[1]
     else:  # using default name
-        project_parameters_file_name = "ProjectParameters.json"
+        project_parameters_file_name = "parameters/ProjectParameters.json"
 
     with open(project_parameters_file_name, "r") as parameter_file:
         parameters = KratosMultiphysics.Parameters(parameter_file.read())
