@@ -33,9 +33,9 @@ modified_environment_data = json.loads(json.dumps(environment_data))
 
 
 # Create output directory if it doesn't exist
-batches_output_dir = "waist_varying_batch"
+batches_parent_dir = "waist_varying_batch"
 try:
-    os.makedirs(batches_output_dir, exist_ok=False)
+    os.makedirs(batches_parent_dir, exist_ok=False)
 except FileExistsError:
     print("The directory for the batch run already exists")
     sys.exit(1)
@@ -44,7 +44,7 @@ except FileExistsError:
 # Generate new parameters files for each beam_waist_diameter value
 for i, beam_waist_diam in enumerate(beam_waist_diameters):
     # Create an output directory for each parameter configuration
-    batch_dir = os.path.join(batches_output_dir, f"beam_waist_{i}")
+    batch_dir = os.path.join(batches_parent_dir, f"beam_waist_{i}")
     os.makedirs(batch_dir, exist_ok=True)
 
     # Modify ProjectParameters
