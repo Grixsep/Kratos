@@ -4,7 +4,6 @@ import numpy as np
 import h5py
 
 import KratosMultiphysics as Kratos
-import KratosMultiphysics.LaserDrillingApplication as KratosLaserDrilling
 
 
 def Factory(settings, Model):
