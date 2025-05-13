@@ -57,6 +57,14 @@
         "initial_conditions_process_list" : [],
         "constraints_process_list"        : [],
         "list_other_processes"            : [{
+            "python_module" : "print_temperature_process",
+            "kratos_module" : "KratosMultiphysics.LaserDrillingApplication",
+            "process_name"  : "PrintTemperatureProcess",
+            "Parameters"    : {
+                "model_part_name" : "ThermalModelPart.CNVDFFParts_piece",
+                "step_jump_between_outputs"  : 1
+            }
+            },{
             "python_module" : "assign_scalar_variable_process",
             "kratos_module" : "KratosMultiphysics",
             "process_name"  : "AssignScalarVariableProcess",
