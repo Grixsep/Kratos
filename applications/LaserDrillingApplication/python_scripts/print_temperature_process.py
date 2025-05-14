@@ -56,14 +56,6 @@ class ApplyPrintTemperatureProcess(Kratos.Process):
             self.time = self.main_model_part.ProcessInfo[Kratos.TIME]
 
             self.PrintTemperatureProcess.MakeMeasurements(self.id_node, self.x_coord, self.y_coord, self.temperature)
-            # for elem in self.main_model_part.Elements:
-            #     if elem.Is(Kratos.ACTIVE):
-            #         for node in elem.GetNodes():
-            #             if not node.Id in self.id_node:
-            #                 self.id_node.append(node.Id)
-            #                 self.x_coord.append(node.X)
-            #                 self.y_coord.append(node.Y)
-            #                 self.temperature.append(node.GetSolutionStepValue(Kratos.TEMPERATURE))
 
             with h5py.File(self.file_path, 'a') as f:
                     self.WriteDataToFile(file_or_group = f,
