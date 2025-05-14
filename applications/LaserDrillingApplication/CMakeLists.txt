@@ -29,9 +29,10 @@ set( KRATOS_LASER_DRILLING_APPLICATION_CORE_SOURCES
 )
 
 ## define python interface sources
-set( KRATOS_LASER_DRILLING_PYTHON_INTERFACE_SOURCES
+set( KRATOS_LASER_DRILLING_PYTHON_INTERFACE
     ${CMAKE_CURRENT_SOURCE_DIR}/custom_python/add_custom_processes_to_python.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/custom_python/laserdrilling_python_application.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/custom_processes/print_temperature_process.cpp
 )
 
 ## define test sources
@@ -46,7 +47,7 @@ target_link_libraries( KratosLaserDrillingCore PUBLIC KratosCore KratosConvectio
 set_target_properties( KratosLaserDrillingCore PROPERTIES COMPILE_DEFINITIONS "LASER_DRILLING_APPLICATION=EXPORT,API")
 
 ## LaserDrillingApplication python module
-pybind11_add_module( KratosLaserDrillingApplication MODULE THIN_LTO ${KRATOS_LASER_DRILLING_PYTHON_INTERFACE_SOURCES} )
+pybind11_add_module( KratosLaserDrillingApplication MODULE THIN_LTO ${KRATOS_LASER_DRILLING_PYTHON_INTERFACE} )
 target_link_libraries( KratosLaserDrillingApplication PRIVATE KratosLaserDrillingCore)
 set_target_properties( KratosLaserDrillingApplication PROPERTIES PREFIX "")
 

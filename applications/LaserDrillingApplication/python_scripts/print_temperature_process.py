@@ -4,14 +4,15 @@ import numpy as np
 import h5py
 
 import KratosMultiphysics as Kratos
+import KratosMultiphysics.LaserDrillingApplication as KratosLaser
 
 
 def Factory(settings, Model):
     if type(settings) != Kratos.Parameters:  # TODO: Ruff E721
         raise Exception("expected input shall be a Parameters object, encapsulating a json string")
-    return PrintTemperatureProcess(Model, settings["Parameters"])
+    return ApplyPrintTemperatureProcess(Model, settings["Parameters"])
 
-class PrintTemperatureProcess(Kratos.Process):
+class ApplyPrintTemperatureProcess(Kratos.Process):
 
     def __init__(self, Model, settings):
 
@@ -32,6 +33,7 @@ class PrintTemperatureProcess(Kratos.Process):
         self.main_model_part = Model[settings["model_part_name"].GetString()]
         self.print_number = 0
         self.jump_between_outputs_counter = 0
+        self.PrintTemperatureProcess = KratosLaser.PrintTemperatureProcess(self.main_model_part, settings)
 
     def ExecuteInitialize(self):
         pass
@@ -53,14 +55,15 @@ class PrintTemperatureProcess(Kratos.Process):
             self.print_number += 1
             self.time = self.main_model_part.ProcessInfo[Kratos.TIME]
 
-            for elem in self.main_model_part.Elements:
-                if elem.Is(Kratos.ACTIVE):
-                    for node in elem.GetNodes():
-                        if not node.Id in self.id_node:
-                            self.id_node.append(node.Id)
-                            self.x_coord.append(node.X)
-                            self.y_coord.append(node.Y)
-                            self.temperature.append(node.GetSolutionStepValue(Kratos.TEMPERATURE))
+            self.PrintTemperatureProcess.MakeMeasurements(self.id_node, self.x_coord, self.y_coord, self.temperature)
+            # for elem in self.main_model_part.Elements:
+            #     if elem.Is(Kratos.ACTIVE):
+            #         for node in elem.GetNodes():
+            #             if not node.Id in self.id_node:
+            #                 self.id_node.append(node.Id)
+            #                 self.x_coord.append(node.X)
+            #                 self.y_coord.append(node.Y)
+            #                 self.temperature.append(node.GetSolutionStepValue(Kratos.TEMPERATURE))
 
             with h5py.File(self.file_path, 'a') as f:
                     self.WriteDataToFile(file_or_group = f,
