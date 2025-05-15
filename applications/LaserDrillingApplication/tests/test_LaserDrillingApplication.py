@@ -1,11 +1,24 @@
-# import Kratos
-import KratosMultiphysics as KM
+# TODO: this file does not seem to play any role ??
 
-# Import Kratos "wrapper" for unittests
-import KratosMultiphysics.KratosUnittest as KratosUnittest
+try:
+    # import Kratos
+    import KratosMultiphysics as KM
+
+    # Import Kratos "wrapper" for unittests
+    import KratosMultiphysics.KratosUnittest as KratosUnittest
+
+    # Import the tests o test_classes to create the suits:
+    import SmallTests
+    import NightTests
+
+except ImportError:
+    print("Import error in test_LaserDrillingApplication.py")
+
+KM.Logger.GetDefaultOutput().SetSeverity(KM.Logger.Severity.WARNING)
+
 
 def AssembleTestSuites():
-    ''' Populates the test suites to run.
+    """Populates the test suites to run.
 
     Populates the test suites to run. At least, it should populate the suites:
     "small", "nightly" and "all"
@@ -15,22 +28,27 @@ def AssembleTestSuites():
 
     suites: A dictionary of suites
         The set of suites with its test_cases added.
-    '''
+    """
+    # Suites to run
     suites = KratosUnittest.KratosSuites
 
-    # Create a test suit with the selected tests (Small tests):
-    smallSuite = suites['small']
+    # SMALL TESTS
+    small_suite = SmallTests.SetTestSuite(suites)
 
-    # Create a test suit with the selected tests plus all small tests
-    nightlySuite = suites['nightly']
-    nightlySuite.addTests(smallSuite)
+    # NIGHTLY TESTS
+    night_suite = NightTests.SetTestSuite(suites)
 
-    # Create a test suit that contains all the tests:
-    allSuite = suites['all']
-    allSuite.addTests(nightlySuite)
+    # include small suite in night suite
+    night_suite.addTests(small_suite)
+
+    # ALL TESTS
+    all_suite = suites["all"]
+
+    all_suite.addTests(night_suite)
 
     return suites
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     KM.Logger.GetDefaultOutput().SetSeverity(KM.Logger.Severity.WARNING)
     KratosUnittest.runTests(AssembleTestSuites())

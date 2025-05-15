@@ -1,19 +1,31 @@
 import os
 
-# The aim of this test is to check that the transference of the porosity from DEM to FEM conserves the total volume of the domain.
-# It does two checks. The first is made to ensure that there are particles in the domain and they are fully coupled with fluid.
-# The second one is to ensure that the total volume is conserved when the smoothed porosity of the particles is transferred to fluid.
+# The aim of this test is to check that the temperature is positive at the end of each solution step
 
 # Importing the Kratos Library
-import KratosMultiphysics
-import numpy as np
+try:
+    import KratosMultiphysics
+except ImportError:
+    print("Failed import of KratosMultiphysics")
+
 # Import KratosUnittest
-import KratosMultiphysics.KratosUnittest as KratosUnittest
-from KratosMultiphysics.SwimmingDEMApplication.swimming_DEM_analysis import SwimmingDEMAnalysis
-import KratosMultiphysics.DEMApplication.DEM_procedures as DEM_procedures
+try:
+    import KratosMultiphysics.KratosUnittest as KratosUnittest
+except ImportError:
+    print("Failed to import: import KratosMultiphysics.KratosUnittest as KratosUnittest")
+
+try:
+    from KratosMultiphysics.LaserDrillingApplication.laserdrilling_analysis import LaserDrillingAnalysis
+except ImportError:
+    print(
+        "Failed to import: from KratosMultiphysics.LaserDrillingApplication.laser_drilling_analysis import LaserDrillingAnalysis"
+    )
+
 # This utility will control the execution scope
 
-debug_mode=False
+debug_mode = False
+
+
 class controlledExecutionScope:
     def __init__(self, scope):
         self.currentPath = os.getcwd()
@@ -25,19 +37,19 @@ class controlledExecutionScope:
     def __exit__(self, type, value, traceback):
         os.chdir(self.currentPath)
 
-class PorosityConservationTestFactory(KratosUnittest.TestCase):
 
+class PositiveTemperatureTestFactory(KratosUnittest.TestCase):
     def setUp(self):
         with controlledExecutionScope(os.path.dirname(os.path.realpath(__file__))):
             # Setting parameters
 
-            with open(self.file_parameters,'r') as parameter_file:
+            with open(self.file_parameters, "r") as parameter_file:
                 parameters = KratosMultiphysics.Parameters(parameter_file.read())
 
             # Create Model
             model = KratosMultiphysics.Model()
 
-            self.test = PorosityConservationAnalysis(model, parameters)
+            self.test = PositiveTemperatureAnalysis(model, parameters)
 
     def test_execution(self):
         with controlledExecutionScope(os.path.dirname(os.path.realpath(__file__))):
@@ -46,33 +58,21 @@ class PorosityConservationTestFactory(KratosUnittest.TestCase):
     def tearDown(self):
         pass
 
-class PorosityConservationAnalysis(SwimmingDEMAnalysis, DEM_procedures.Procedures):
 
+class PositiveTemperatureAnalysis(LaserDrillingAnalysis):
     def __init__(self, model, parameters):
         super().__init__(model, parameters)
         if not debug_mode:
-            parameters['sdem_output_processes'] = KratosMultiphysics.Parameters("""{}""")
-        self._GetDEMAnalysis().mdpas_folder_path = os.path.join(self._GetDEMAnalysis().main_path, 'porosity_tests/porosity_conservation/')
+            parameters["output_processes"] = KratosMultiphysics.Parameters("""{}""")
+        # self._GetLaserDrillingAnalysis().mdpas_folder_path = os.path.join(
+        #     self._GetLaserDrillingAnalysis().main_path, "porosity_tests/porosity_conservation/"
+        # )
 
     def FinalizeSolutionStep(self):
         super().FinalizeSolutionStep()
-        self.solid_domain_volume = self.ComputeSolidVolume()
-        self.CheckConservation()
+        self.CheckPositiveTemperature()
 
-    def ComputeSolidVolume(self):
-        solid_volume = 0.0
-        spheres_model_part = self.model.GetModelPart('SpheresPart')
-        for node in spheres_model_part.Nodes:
-            sphere_volume = node.GetSolutionStepValue(KratosMultiphysics.RADIUS) ** 3 * 4/3 * np.pi
-            solid_volume += sphere_volume
-        return solid_volume
-
-    def CheckConservation(self):
-        numerical_fluid_volume = 0.0
-        fluid_volume = 0.0
-        for node in self.fluid_model_part.Nodes:
-            fluid_volume += node.GetSolutionStepValue(KratosMultiphysics.NODAL_AREA)
-            numerical_fluid_volume +=  node.GetSolutionStepValue(KratosMultiphysics.FLUID_FRACTION) * node.GetSolutionStepValue(KratosMultiphysics.NODAL_AREA)
-
-        assert fluid_volume != numerical_fluid_volume
-        assert np.abs(fluid_volume - self.solid_domain_volume - numerical_fluid_volume) < 1e-17
+    def CheckPositiveTemperature(self):
+        model_part = self.model.GetModelPart("ThermalModelPart")
+        for node in model_part.Nodes:
+            assert node.GetSolutionStepValue(KratosMultiphysics.TEMPERATURE) > 0
