@@ -309,3 +309,13 @@ class LaserDrillingTransientSolverAblationPlusThermal(laserdrilling_transient_so
                 X_coords = A * Y_coords * Y_coords + C
                 self.hole_parabolical_profile.write(str(Y_coords) + " " + str(X_coords) + "\n")
             self.hole_parabolical_profile.close()
+
+    def FinalizeSolutionStep(self):
+        super().FinalizeSolutionStep()
+
+        # TODO: this should make the test fail
+        fail_test = False
+        if fail_test:
+            node_ids = [node.Id for node in self.main_model_part.Nodes]
+            test_node = self.main_model_part.GetNode(node_ids[0])
+            test_node.SetSolutionStepValue(KratosMultiphysics.TEMPERATURE, -10)
