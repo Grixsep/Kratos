@@ -314,8 +314,8 @@ class LaserDrillingTransientSolverAblationPlusThermal(laserdrilling_transient_so
         super().FinalizeSolutionStep()
 
         # TODO: this should make the test fail
-        fail_test = False
+        fail_test = True
         if fail_test:
             node_ids = [node.Id for node in self.main_model_part.Nodes]
-            test_node = self.main_model_part.GetNode(node_ids[0])
+            test_node = self.main_model_part.GetNode(node_ids[10000])
             test_node.SetSolutionStepValue(KratosMultiphysics.TEMPERATURE, -10)
