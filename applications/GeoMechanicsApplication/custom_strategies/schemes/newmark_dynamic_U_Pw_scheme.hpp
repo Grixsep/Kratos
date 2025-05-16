@@ -29,7 +29,7 @@ class NewmarkDynamicUPwScheme : public GeneralizedNewmarkScheme<TSparseSpace, TD
 public:
     KRATOS_CLASS_POINTER_DEFINITION(NewmarkDynamicUPwScheme);
 
-    using BaseType              = Scheme<TSparseSpace, TDenseSpace>;
+    using BaseType              = GeneralizedNewmarkScheme<TSparseSpace, TDenseSpace>;
     using DofsArrayType         = typename BaseType::DofsArrayType;
     using TSystemMatrixType     = typename BaseType::TSystemMatrixType;
     using TSystemVectorType     = typename BaseType::TSystemVectorType;
