@@ -3,7 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 # Open the HDF5 file (replace 'your_file.h5' with your actual file path)
-file_path = "temperature_db.hdf5"
+file_path = "temperature_db_cpp.hdf5"
 
 # Lists to store results
 times = []
@@ -79,10 +79,10 @@ max_temperatures = np.array(max_temperatures)[sorted_indices]
 
 # Create the plot
 plt.figure(figsize=(10, 6))
-plt.plot(times, max_temperatures, ".", "b-", label="Max Temperature")
+plt.plot(times, max_temperatures, ".", label="Max temperature")
 plt.xlabel("Time")
 plt.ylabel("Temperature")
-plt.title("Evolution of Mmximum temperature over time")
+plt.title("Evolution of maximum temperature over time")
 plt.grid(False)
 plt.legend()
 
