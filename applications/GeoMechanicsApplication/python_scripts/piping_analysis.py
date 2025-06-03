@@ -59,7 +59,7 @@ class PipingAnalysis(GeoMechanicsAnalysis):
 
             # run solver
             self.InitializeSolutionStep()
-            self._GetSolver().Predict()
+            # self._GetSolver().Predict()
             converged = self._GetSolver().SolveSolutionStep()
 
             # reduce time step size if no converge is reached, increase time step size if n_iterations < min iterations
