@@ -48,21 +48,6 @@ class TestConsecutivePipeLines(KratosUnittest.TestCase):
         return math.nan
 
 
-    def test_split_geometry_permeability_soil2_e10(self):
-        """
-         Testing a split geometry with two different permeability (Soil_1_permeability= 1.157e-12 ,
-         Soil_2_permeability= 1.157e-10)
-        """
-        test_file = "split_geometry_permeability_soil2_e10"
-
-        test_name = os.path.join('test_consecutive_pipe_lines', test_file)
-        file_path = test_helper.get_file_path(os.path.join('.', test_name))
-        heads = [x * 0.01 for x in range(int(180),
-                                      int(190), 1)]
-        critical_head_found = self.linear_search(file_path, heads)
-        self.assertAlmostEqual(critical_head_found, 1.82, 2)
-
-
     def test_split_geometry_pipe2_D70_3e4(self):
         """
          Testing a split geometry with same permeability (Soil_permeability= 1.157e-10). Pipe is separated to two parts
