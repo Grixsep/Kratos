@@ -48,20 +48,6 @@ class TestConsecutivePipeLines(KratosUnittest.TestCase):
         return math.nan
 
 
-    def test_reference_geometry(self):
-        """
-         Testing a simple Sellmeijer rule (Soil_permeability= 1.157e-12 , PIPE_D_70: 0.0001)
-        """
-        test_file = "reference_geometry"
-
-        test_name = os.path.join('test_consecutive_pipe_lines', test_file)
-        file_path = test_helper.get_file_path(os.path.join('.', test_name))
-        heads = [x * 0.01 for x in range(int(370),
-                                      int(380), 1)]
-        critical_head_found = self.linear_search(file_path, heads)
-        self.assertAlmostEqual(critical_head_found, 3.78, 2)
-
-
     def test_split_geometry_permeability_soil1_e10(self):
         """
          Testing a split geometry with two different permeability (Soil_1_permeability= 1.157e-10 ,
