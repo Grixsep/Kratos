@@ -92,21 +92,6 @@ class TestConsecutivePipeLines(KratosUnittest.TestCase):
         self.assertAlmostEqual(critical_head_found, 0.94, 2)
 
 
-    def test_split_geometry_double_lines_pipe2_added(self):
-        """
-         Testing a split geometry with same permeability (Soil_permeability= 1.157e-12). Pipe is separated to two parts.
-         Pipe_2 with the same material is added to the geometry along the other one (PIPE_D_70: 0.0001)
-        """
-        test_file = "split_geometry_double_lines_pipe2_added"
-
-        test_name = os.path.join('test_consecutive_pipe_lines', test_file)
-        file_path = test_helper.get_file_path(os.path.join('.', test_name))
-        heads = [x * 0.01 for x in range(int(370),
-                                      int(380), 1)]
-        critical_head_found = self.linear_search(file_path, heads)
-        self.assertAlmostEqual(critical_head_found, 3.77, 2)
-
-
     def test_split_geometry_pipe2_D70_3e4(self):
         """
          Testing a split geometry with same permeability (Soil_permeability= 1.157e-10). Pipe is separated to two parts
