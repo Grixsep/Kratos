@@ -1,5 +1,0 @@
-@startuml
- :GeoMechanicsNewtonRaphsonStrategy::InitializeSolutionStep();
- :GeoMechanicsNewtonRaphsonStrategy::Predict();
- :GeoMechanicsNewtonRaphsonStrategy::SolveSolutionStep();
-@enduml
